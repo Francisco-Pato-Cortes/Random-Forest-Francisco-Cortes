@@ -1,0 +1,2272 @@
+.libPaths('G:/Applications/R_Packages/R3.5.2 library/library_nov')
+
+library("caretEnsemble", lib.loc="G:/Applications/R_Packages/R3.5.2 library/library_nov")
+library("igraph", lib.loc="G:/Applications/R_Packages/R3.5.2 library/library_nov")
+library("ggraph", lib.loc="G:/Applications/R_Packages/R3.5.2 library/library_nov")
+library("tidyr", lib.loc="G:/Applications/R_Packages/R3.5.2 library/library_nov")
+library("dplyr", lib.loc="G:/Applications/R_Packages/R3.5.2 library/library_nov")
+library("ggplot2", lib.loc="G:/Applications/R_Packages/R3.5.2 library/library_nov")
+library("psych", lib.loc="G:/Applications/R_Packages/R3.5.2 library/library_nov")
+library("readxl", lib.loc="G:/Applications/R_Packages/R3.5.2 library/library_nov")
+library("caret", lib.loc="G:/Applications/R_Packages/R3.5.2 library/library_nov")
+library("pROC", lib.loc="G:/Applications/R_Packages/R3.5.2 library/library_nov")
+library("randomForest", lib.loc="G:/Applications/R_Packages/R3.5.2 library/library_nov")
+library("nnet", lib.loc="G:/Applications/R_Packages/R3.5.2 library/library_nov")
+library("skimr", lib.loc="G:/Applications/R_Packages/R3.5.2 library/library_nov")
+library("nnet", lib.loc="G:/Applications/R_Packages/R3.5.2 library/library_nov")
+library("car", lib.loc="G:/Applications/R_Packages/R3.5.2 library/library_nov")
+
+
+##########SUBSET 1###############
+
+
+ONCOML_RANDOM39 <- read_excel("X:/My Desktop/CLUSTER ANALYSIS/9 VARIABLES/ML/july2019/ML2039 R/ML2039 1.xlsx")
+
+View(ONCOML_RANDOM39)
+ML2039=ONCOML_RANDOM39
+str(ML2039)
+View(ML2039)
+
+ML2039$PSEUDOIDEXT_DR16<-NULL
+ML2039$PSEUDOIDEXT_DR17<-NULL
+#ML2039$AGE_BL1<-NULL
+#ML2039$GESLACHT<-NULL
+#ML2039$EDUCATIONLMH <-NULL
+#ML2039$BMI <-NULL
+#ML2039$SumOfalcohol <-NULL
+#ML2039$MVPA3_HOURS <-NULL
+#ML2039$EA_DIETSCORE <-NULL
+#ML2039$TVHOURSTOTAL <-NULL
+#ML2039$CURRENTCIGARRETS <-NULL
+
+# CATEGORICAL VARIABLES AS FACTORS
+#ONCOML_RANDOM39$CNC_01<-as.factor(ONCOML_RANDOM39$CNC_01)
+
+ML2039$CNC_01<-as.factor(ML2039$CNC_01)
+#ML2039$GESLACHT <- as.factor(ML2039$GESLACHT)
+#ML2039$EDUCATIONLMH <- as.factor(ML2039$EDUCATIONLMH)
+
+str(ML2039)
+View(ML2039)
+skim_to_wide(ML2039)
+
+#hist(ML2039$AGE_BL1)
+hist(ML2039$BMI)
+hist(ML2039$SumOfalcohol)
+hist(ML2039$CURRENTCIGARRETS)
+hist(ML2039$MVPA3_HOURS)
+hist(ML2039$TVHOURSTOTAL)
+hist(ML2039$EA_DIETSCORE)
+
+###    3.1 sPLIT DATASET INTO TRAINING AND VALIDATION
+
+TrainRowNumbers39<- createDataPartition(ML2039$CNC_01, p=0.80, list=FALSE)
+TrainData39 <- ML2039[TrainRowNumbers39,]
+str(TrainData39)
+
+testData39<- ML2039[-TrainRowNumbers39,]
+str(testData39)
+
+x39=TrainData39[,2:7]
+x39
+
+y39=TrainData39$CNC_01
+y39
+
+str(testData39)
+
+###############  3.5  PRE PROCESS TO TRANSFORM THE DATA
+skim(TrainData39)
+
+#AgeTRmean <- mean(TrainData39$AGE_BL1)
+BMITRmean <- mean(TrainData39$BMI)
+AlcoholTRmean <- mean(TrainData39$SumOfalcohol)
+SmokingTRmean <- mean(TrainData39$CURRENTCIGARRETS)
+PATRmean <- mean(TrainData39$MVPA3_HOURS)
+SedentaryTRmean <- mean(TrainData39$TVHOURSTOTAL)
+DietTRmean <- mean(TrainData39$EA_DIETSCORE)
+
+#AgeTRSD <- sd(TrainData39$AGE_BL1)
+BMITRSD <- sd(TrainData39$BMI)
+AlcoholTRSD <- sd(TrainData39$SumOfalcohol)
+SmokingTRSD <- sd(TrainData39$CURRENTCIGARRETS)
+PATRSD <- sd(TrainData39$MVPA3_HOURS)
+SedentaryTRSD <- sd(TrainData39$TVHOURSTOTAL)
+DietTRSD <- sd(TrainData39$EA_DIETSCORE)
+
+
+#TrainData39$BMI <- log(TrainData39$BMI+1)
+#TrainData39$CURRENTCIGARRETS <-log(TrainData39$CURRENTCIGARRETS+1)
+#TrainData39$MVPA3_HOURS <- log(TrainData39$MVPA3_HOURS+1)
+#TrainData39$SumOfalcohol <- log(TrainData39$SumOfalcohol+1)
+#TrainData39$TVHOURSTOTAL <- log(TrainData39$TVHOURSTOTAL+1)
+
+preProcess_range_model39 <-preProcess(TrainData39, method=c("center","scale"))
+preProcess_range_model39
+preProcess_range_model39$mean
+preProcess_range_model39$std
+preProcess_range_model39$method
+
+
+TrainData39<-predict(preProcess_range_model39, newdata = TrainData39)
+TrainData39
+TrainData39$CNC_01 <- y39
+
+skim(TrainData39)
+
+
+apply(TrainData39 [2:7],2, FUN = function(x4){c('min'=min(x4), 'max'=max(x4))})
+#apply(TrainData39 [2],2, FUN = function(x4){c('min'=min(x4), 'max'=max(x4))})
+
+View(TrainData39)
+str(TrainData39)
+describe(TrainData39)
+describe(testData39)
+skim_to_wide(TrainData39)
+skim_to_wide(testData39)
+
+
+###SET MODEL 5 FOLD CROSSVALIDATON
+
+fitControl39<- trainControl( method = "cv",
+                             number = 5,
+                             savePredictions = "final",
+                             classProbs = TRUE,
+                             summaryFunction = twoClassSummary)
+
+#mtry39<- sqrt(ncol(x39))
+mtry39<-3 
+tunegrid39<-expand.grid(.mtry=mtry39)
+#                      splitrule= c("gini", "extratrees"),
+#                     min.node.size =c(1,3))
+
+##################  RUN THE RANDOM FOREST MODEL WITH CARET PACKAGE
+
+set.seed(100)
+model_rf39cr = train(CNC_01~.,data =TrainData39, method="rf", 
+                   trControl=fitControl39,  
+                   metric="ROC",tuneGrid=tunegrid39, splitrule= c("gini"), ntree=500, importance=TRUE)
+model_rf39cr
+
+# MAIN TABLE FOR RESULTS OF THE MODEL
+model_rf39cr$finalModel$importance
+model_rf39cr$finalModel$importanceSD
+
+
+##################  RUN THE RANDOM FOREST MODEL WITH RANDOM FOREST PACKAGE
+table(testData39$CNC_01)
+table(TrainData39$CNC_01)
+
+set.seed(100)
+model_rf39rf= randomForest(CNC_01~.,data =TrainData39, ntree=500, mtry= 3 , importance=TRUE, proximity= TRUE)
+
+print(model_rf39rf)
+model_rf39rf
+model_rf39rf$forest$nrnodes
+attributes(model_rf39rf)
+model_rf39rf$importance
+
+##############################################################
+
+model_rf39cr$finalModel$importance
+model_rf39cr$finalModel$importanceSD
+model_rf39cr$results
+model_rf39cr$results$ROC
+model_rf39cr$results$ROCSD
+
+
+
+###  PARTIAL DEPENDENCE PLOT #########
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , AGE_BL1, which.class = "CANCER", main = "Classification for cancer survivorship (Age)")
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , AGE_BL1, which.class = "NOCANCER", main = "Classification for non cancer participant (Age)")
+
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , BMI, which.class = "CANCER", main = "Classification for cancer survivorship (BMI)")
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , BMI, which.class = "NOCANCER", main = "Classification for non cancer participant (BMI)")
+
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , SumOfalcohol, which.class = "CANCER", main = "Classification for cancer survivorship (Alcohol)")
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , SumOfalcohol, which.class = "NOCANCER", main = "Classification for non cancer participant (Alcohol)")
+
+
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , EA_DIETSCORE, which.class = "CANCER", main = "Classification for cancer survivorship (Diet)")
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , EA_DIETSCORE, which.class = "NOCANCER", main = "Classification for non cancer participant (Diet)")
+
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , TVHOURSTOTAL, which.class = "CANCER", main = "Classification for cancer survivorship (Sedentary behaviour)")
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , TVHOURSTOTAL, which.class = "NOCANCER", main = "Classification for non cancer participant (Sedentary behaviour)")
+
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , MVPA3_HOURS, which.class = "CANCER", main = "Classification for cancer survivorship (Physical activity)")
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , MVPA3_HOURS, which.class = "NOCANCER", main = "Classification for non cancer participant (Physical activity)")
+
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , CURRENTCIGARRETS, which.class = "CANCER", main = "Classification for cancer survivorship (Smoking)")
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , CURRENTCIGARRETS, which.class = "NOCANCER", main = "Classification for non cancer participant (Smoking)")
+
+
+############    PREDICT ON TEST DATA 
+
+testData39cr<-predict(preProcess_range_model39, newdata = testData39)
+testData39rf<-predict(preProcess_range_model39, newdata = testData39)
+
+View(testData39rf)
+View(testData39cr)
+
+roc(p1, testData39rf$CNC_01)
+
+p1
+
+p1<-predict(model_rf39rf, testData39rf)
+p2<-predict(model_rf39cr, testData39cr)
+
+confusionMatrix(reference = testData39rf$CNC_01, data =  p1, mode = "everything", positive = "CANCER")
+confusionMatrix(reference = testData39cr$CNC_01, data =  p2, mode = "everything", positive = "CANCER")
+
+##
+
+
+
+##########SUBSET 2###############
+
+
+ONCOML_RANDOM39 <- read_excel("X:/My Desktop/CLUSTER ANALYSIS/9 VARIABLES/ML/july2019/ML2039 R/ML2039 2.xlsx")
+
+View(ONCOML_RANDOM39)
+ML2039=ONCOML_RANDOM39
+str(ML2039)
+View(ML2039)
+
+ML2039$PSEUDOIDEXT_DR16<-NULL
+ML2039$PSEUDOIDEXT_DR17<-NULL
+#ML2039$AGE_BL1<-NULL
+#ML2039$GESLACHT<-NULL
+#ML2039$EDUCATIONLMH <-NULL
+#ML2039$BMI <-NULL
+#ML2039$SumOfalcohol <-NULL
+#ML2039$MVPA3_HOURS <-NULL
+#ML2039$EA_DIETSCORE <-NULL
+#ML2039$TVHOURSTOTAL <-NULL
+#ML2039$CURRENTCIGARRETS <-NULL
+
+# CATEGORICAL VARIABLES AS FACTORS
+#ONCOML_RANDOM39$CNC_01<-as.factor(ONCOML_RANDOM39$CNC_01)
+
+ML2039$CNC_01<-as.factor(ML2039$CNC_01)
+#ML2039$GESLACHT <- as.factor(ML2039$GESLACHT)
+#ML2039$EDUCATIONLMH <- as.factor(ML2039$EDUCATIONLMH)
+
+str(ML2039)
+View(ML2039)
+skim_to_wide(ML2039)
+
+#hist(ML2039$AGE_BL1)
+hist(ML2039$BMI)
+hist(ML2039$SumOfalcohol)
+hist(ML2039$CURRENTCIGARRETS)
+hist(ML2039$MVPA3_HOURS)
+hist(ML2039$TVHOURSTOTAL)
+hist(ML2039$EA_DIETSCORE)
+
+###    3.1 sPLIT DATASET INTO TRAINING AND VALIDATION
+
+TrainRowNumbers39<- createDataPartition(ML2039$CNC_01, p=0.80, list=FALSE)
+TrainData39 <- ML2039[TrainRowNumbers39,]
+str(TrainData39)
+
+testData39<- ML2039[-TrainRowNumbers39,]
+str(testData39)
+
+x39=TrainData39[,2:7]
+x39
+
+y39=TrainData39$CNC_01
+y39
+
+str(testData39)
+
+###############  3.5  PRE PROCESS TO TRANSFORM THE DATA
+skim(TrainData39)
+
+#AgeTRmean <- mean(TrainData39$AGE_BL1)
+BMITRmean <- mean(TrainData39$BMI)
+AlcoholTRmean <- mean(TrainData39$SumOfalcohol)
+SmokingTRmean <- mean(TrainData39$CURRENTCIGARRETS)
+PATRmean <- mean(TrainData39$MVPA3_HOURS)
+SedentaryTRmean <- mean(TrainData39$TVHOURSTOTAL)
+DietTRmean <- mean(TrainData39$EA_DIETSCORE)
+
+#AgeTRSD <- sd(TrainData39$AGE_BL1)
+BMITRSD <- sd(TrainData39$BMI)
+AlcoholTRSD <- sd(TrainData39$SumOfalcohol)
+SmokingTRSD <- sd(TrainData39$CURRENTCIGARRETS)
+PATRSD <- sd(TrainData39$MVPA3_HOURS)
+SedentaryTRSD <- sd(TrainData39$TVHOURSTOTAL)
+DietTRSD <- sd(TrainData39$EA_DIETSCORE)
+
+
+#TrainData39$BMI <- log(TrainData39$BMI+1)
+#TrainData39$CURRENTCIGARRETS <-log(TrainData39$CURRENTCIGARRETS+1)
+#TrainData39$MVPA3_HOURS <- log(TrainData39$MVPA3_HOURS+1)
+#TrainData39$SumOfalcohol <- log(TrainData39$SumOfalcohol+1)
+#TrainData39$TVHOURSTOTAL <- log(TrainData39$TVHOURSTOTAL+1)
+
+preProcess_range_model39 <-preProcess(TrainData39, method=c("center","scale"))
+preProcess_range_model39
+preProcess_range_model39$mean
+preProcess_range_model39$std
+preProcess_range_model39$method
+
+
+TrainData39<-predict(preProcess_range_model39, newdata = TrainData39)
+TrainData39
+TrainData39$CNC_01 <- y39
+
+skim(TrainData39)
+
+
+apply(TrainData39 [2:7],2, FUN = function(x4){c('min'=min(x4), 'max'=max(x4))})
+#apply(TrainData39 [2],2, FUN = function(x4){c('min'=min(x4), 'max'=max(x4))})
+
+View(TrainData39)
+str(TrainData39)
+describe(TrainData39)
+describe(testData39)
+skim_to_wide(TrainData39)
+skim_to_wide(testData39)
+
+
+###SET MODEL 5 FOLD CROSSVALIDATON
+
+fitControl39<- trainControl( method = "cv",
+                             number = 5,
+                             savePredictions = "final",
+                             classProbs = TRUE,
+                             summaryFunction = twoClassSummary)
+
+#mtry39<- sqrt(ncol(x39))
+mtry39<-3 
+tunegrid39<-expand.grid(.mtry=mtry39)
+#                      splitrule= c("gini", "extratrees"),
+#                     min.node.size =c(1,3))
+
+##################  RUN THE RANDOM FOREST MODEL WITH CARET PACKAGE
+
+set.seed(100)
+model_rf39cr = train(CNC_01~.,data =TrainData39, method="rf", 
+                   trControl=fitControl39,  
+                   metric="ROC",tuneGrid=tunegrid39, splitrule= c("gini"), ntree=500, importance=TRUE)
+model_rf39cr
+
+# MAIN TABLE FOR RESULTS OF THE MODEL
+model_rf39cr$finalModel$importance
+model_rf39cr$finalModel$importanceSD
+
+
+##################  RUN THE RANDOM FOREST MODEL WITH RANDOM FOREST PACKAGE
+table(testData39$CNC_01)
+table(TrainData39$CNC_01)
+
+set.seed(100)
+model_rf39rf= randomForest(CNC_01~.,data =TrainData39, ntree=500, mtry= 3 , importance=TRUE, proximity= TRUE)
+
+print(model_rf39rf)
+model_rf39rf
+model_rf39rf$forest$nrnodes
+attributes(model_rf39rf)
+model_rf39rf$importance
+
+##############################################################
+
+model_rf39cr$finalModel$importance
+model_rf39cr$finalModel$importanceSD
+model_rf39cr$results
+model_rf39cr$results$ROC
+model_rf39cr$results$ROCSD
+
+
+
+###  PARTIAL DEPENDENCE PLOT #########
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , AGE_BL1, which.class = "CANCER", main = "Classification for cancer survivorship (Age)")
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , AGE_BL1, which.class = "NOCANCER", main = "Classification for non cancer participant (Age)")
+
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , BMI, which.class = "CANCER", main = "Classification for cancer survivorship (BMI)")
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , BMI, which.class = "NOCANCER", main = "Classification for non cancer participant (BMI)")
+
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , SumOfalcohol, which.class = "CANCER", main = "Classification for cancer survivorship (Alcohol)")
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , SumOfalcohol, which.class = "NOCANCER", main = "Classification for non cancer participant (Alcohol)")
+
+
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , EA_DIETSCORE, which.class = "CANCER", main = "Classification for cancer survivorship (Diet)")
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , EA_DIETSCORE, which.class = "NOCANCER", main = "Classification for non cancer participant (Diet)")
+
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , TVHOURSTOTAL, which.class = "CANCER", main = "Classification for cancer survivorship (Sedentary behaviour)")
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , TVHOURSTOTAL, which.class = "NOCANCER", main = "Classification for non cancer participant (Sedentary behaviour)")
+
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , MVPA3_HOURS, which.class = "CANCER", main = "Classification for cancer survivorship (Physical activity)")
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , MVPA3_HOURS, which.class = "NOCANCER", main = "Classification for non cancer participant (Physical activity)")
+
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , CURRENTCIGARRETS, which.class = "CANCER", main = "Classification for cancer survivorship (Smoking)")
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , CURRENTCIGARRETS, which.class = "NOCANCER", main = "Classification for non cancer participant (Smoking)")
+
+
+
+
+##########SUBSET 3###############
+
+
+ONCOML_RANDOM39 <- read_excel("X:/My Desktop/CLUSTER ANALYSIS/9 VARIABLES/ML/july2019/ML2039 R/ML2039 3.xlsx")
+
+View(ONCOML_RANDOM39)
+ML2039=ONCOML_RANDOM39
+str(ML2039)
+View(ML2039)
+
+ML2039$PSEUDOIDEXT_DR16<-NULL
+ML2039$PSEUDOIDEXT_DR17<-NULL
+#ML2039$AGE_BL1<-NULL
+#ML2039$GESLACHT<-NULL
+#ML2039$EDUCATIONLMH <-NULL
+#ML2039$BMI <-NULL
+#ML2039$SumOfalcohol <-NULL
+#ML2039$MVPA3_HOURS <-NULL
+#ML2039$EA_DIETSCORE <-NULL
+#ML2039$TVHOURSTOTAL <-NULL
+#ML2039$CURRENTCIGARRETS <-NULL
+
+# CATEGORICAL VARIABLES AS FACTORS
+#ONCOML_RANDOM39$CNC_01<-as.factor(ONCOML_RANDOM39$CNC_01)
+
+ML2039$CNC_01<-as.factor(ML2039$CNC_01)
+#ML2039$GESLACHT <- as.factor(ML2039$GESLACHT)
+#ML2039$EDUCATIONLMH <- as.factor(ML2039$EDUCATIONLMH)
+
+str(ML2039)
+View(ML2039)
+skim_to_wide(ML2039)
+
+#hist(ML2039$AGE_BL1)
+hist(ML2039$BMI)
+hist(ML2039$SumOfalcohol)
+hist(ML2039$CURRENTCIGARRETS)
+hist(ML2039$MVPA3_HOURS)
+hist(ML2039$TVHOURSTOTAL)
+hist(ML2039$EA_DIETSCORE)
+
+###    3.1 sPLIT DATASET INTO TRAINING AND VALIDATION
+
+TrainRowNumbers39<- createDataPartition(ML2039$CNC_01, p=0.80, list=FALSE)
+TrainData39 <- ML2039[TrainRowNumbers39,]
+str(TrainData39)
+
+testData39<- ML2039[-TrainRowNumbers39,]
+str(testData39)
+
+x39=TrainData39[,2:7]
+x39
+
+y39=TrainData39$CNC_01
+y39
+
+str(testData39)
+
+###############  3.5  PRE PROCESS TO TRANSFORM THE DATA
+skim(TrainData39)
+
+#AgeTRmean <- mean(TrainData39$AGE_BL1)
+BMITRmean <- mean(TrainData39$BMI)
+AlcoholTRmean <- mean(TrainData39$SumOfalcohol)
+SmokingTRmean <- mean(TrainData39$CURRENTCIGARRETS)
+PATRmean <- mean(TrainData39$MVPA3_HOURS)
+SedentaryTRmean <- mean(TrainData39$TVHOURSTOTAL)
+DietTRmean <- mean(TrainData39$EA_DIETSCORE)
+
+#AgeTRSD <- sd(TrainData39$AGE_BL1)
+BMITRSD <- sd(TrainData39$BMI)
+AlcoholTRSD <- sd(TrainData39$SumOfalcohol)
+SmokingTRSD <- sd(TrainData39$CURRENTCIGARRETS)
+PATRSD <- sd(TrainData39$MVPA3_HOURS)
+SedentaryTRSD <- sd(TrainData39$TVHOURSTOTAL)
+DietTRSD <- sd(TrainData39$EA_DIETSCORE)
+
+
+#TrainData39$BMI <- log(TrainData39$BMI+1)
+#TrainData39$CURRENTCIGARRETS <-log(TrainData39$CURRENTCIGARRETS+1)
+#TrainData39$MVPA3_HOURS <- log(TrainData39$MVPA3_HOURS+1)
+#TrainData39$SumOfalcohol <- log(TrainData39$SumOfalcohol+1)
+#TrainData39$TVHOURSTOTAL <- log(TrainData39$TVHOURSTOTAL+1)
+
+preProcess_range_model39 <-preProcess(TrainData39, method=c("center","scale"))
+preProcess_range_model39
+preProcess_range_model39$mean
+preProcess_range_model39$std
+preProcess_range_model39$method
+
+
+TrainData39<-predict(preProcess_range_model39, newdata = TrainData39)
+TrainData39
+TrainData39$CNC_01 <- y39
+
+skim(TrainData39)
+
+
+apply(TrainData39 [2:7],2, FUN = function(x4){c('min'=min(x4), 'max'=max(x4))})
+#apply(TrainData39 [2],2, FUN = function(x4){c('min'=min(x4), 'max'=max(x4))})
+
+View(TrainData39)
+str(TrainData39)
+describe(TrainData39)
+describe(testData39)
+skim_to_wide(TrainData39)
+skim_to_wide(testData39)
+
+
+###SET MODEL 5 FOLD CROSSVALIDATON
+
+fitControl39<- trainControl( method = "cv",
+                             number = 5,
+                             savePredictions = "final",
+                             classProbs = TRUE,
+                             summaryFunction = twoClassSummary)
+
+#mtry39<- sqrt(ncol(x39))
+mtry39<-3 
+tunegrid39<-expand.grid(.mtry=mtry39)
+#                      splitrule= c("gini", "extratrees"),
+#                     min.node.size =c(1,3))
+
+##################  RUN THE RANDOM FOREST MODEL WITH CARET PACKAGE
+
+set.seed(100)
+model_rf39cr = train(CNC_01~.,data =TrainData39, method="rf", 
+                   trControl=fitControl39,  
+                   metric="ROC",tuneGrid=tunegrid39, splitrule= c("gini"), ntree=500, importance=TRUE)
+model_rf39cr
+
+# MAIN TABLE FOR RESULTS OF THE MODEL
+model_rf39cr$finalModel$importance
+model_rf39cr$finalModel$importanceSD
+
+
+##################  RUN THE RANDOM FOREST MODEL WITH RANDOM FOREST PACKAGE
+table(testData39$CNC_01)
+table(TrainData39$CNC_01)
+
+set.seed(100)
+model_rf39rf= randomForest(CNC_01~.,data =TrainData39, ntree=500, mtry= 3 , importance=TRUE, proximity= TRUE)
+
+print(model_rf39rf)
+model_rf39rf
+model_rf39rf$forest$nrnodes
+attributes(model_rf39rf)
+model_rf39rf$importance
+
+##############################################################
+
+model_rf39cr$finalModel$importance
+model_rf39cr$finalModel$importanceSD
+model_rf39cr$results
+model_rf39cr$results$ROC
+model_rf39cr$results$ROCSD
+
+
+
+###  PARTIAL DEPENDENCE PLOT #########
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , AGE_BL1, which.class = "CANCER", main = "Classification for cancer survivorship (Age)")
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , AGE_BL1, which.class = "NOCANCER", main = "Classification for non cancer participant (Age)")
+
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , BMI, which.class = "CANCER", main = "Classification for cancer survivorship (BMI)")
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , BMI, which.class = "NOCANCER", main = "Classification for non cancer participant (BMI)")
+
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , SumOfalcohol, which.class = "CANCER", main = "Classification for cancer survivorship (Alcohol)")
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , SumOfalcohol, which.class = "NOCANCER", main = "Classification for non cancer participant (Alcohol)")
+
+
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , EA_DIETSCORE, which.class = "CANCER", main = "Classification for cancer survivorship (Diet)")
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , EA_DIETSCORE, which.class = "NOCANCER", main = "Classification for non cancer participant (Diet)")
+
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , TVHOURSTOTAL, which.class = "CANCER", main = "Classification for cancer survivorship (Sedentary behaviour)")
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , TVHOURSTOTAL, which.class = "NOCANCER", main = "Classification for non cancer participant (Sedentary behaviour)")
+
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , MVPA3_HOURS, which.class = "CANCER", main = "Classification for cancer survivorship (Physical activity)")
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , MVPA3_HOURS, which.class = "NOCANCER", main = "Classification for non cancer participant (Physical activity)")
+
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , CURRENTCIGARRETS, which.class = "CANCER", main = "Classification for cancer survivorship (Smoking)")
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , CURRENTCIGARRETS, which.class = "NOCANCER", main = "Classification for non cancer participant (Smoking)")
+
+
+
+##########SUBSET 4###############
+
+
+ONCOML_RANDOM39 <- read_excel("X:/My Desktop/CLUSTER ANALYSIS/9 VARIABLES/ML/july2019/ML2039 R/ML2039 4.xlsx")
+
+View(ONCOML_RANDOM39)
+ML2039=ONCOML_RANDOM39
+str(ML2039)
+View(ML2039)
+
+ML2039$PSEUDOIDEXT_DR16<-NULL
+ML2039$PSEUDOIDEXT_DR17<-NULL
+#ML2039$AGE_BL1<-NULL
+#ML2039$GESLACHT<-NULL
+#ML2039$EDUCATIONLMH <-NULL
+#ML2039$BMI <-NULL
+#ML2039$SumOfalcohol <-NULL
+#ML2039$MVPA3_HOURS <-NULL
+#ML2039$EA_DIETSCORE <-NULL
+#ML2039$TVHOURSTOTAL <-NULL
+#ML2039$CURRENTCIGARRETS <-NULL
+
+# CATEGORICAL VARIABLES AS FACTORS
+#ONCOML_RANDOM39$CNC_01<-as.factor(ONCOML_RANDOM39$CNC_01)
+
+ML2039$CNC_01<-as.factor(ML2039$CNC_01)
+#ML2039$GESLACHT <- as.factor(ML2039$GESLACHT)
+#ML2039$EDUCATIONLMH <- as.factor(ML2039$EDUCATIONLMH)
+
+str(ML2039)
+View(ML2039)
+skim_to_wide(ML2039)
+
+#hist(ML2039$AGE_BL1)
+hist(ML2039$BMI)
+hist(ML2039$SumOfalcohol)
+hist(ML2039$CURRENTCIGARRETS)
+hist(ML2039$MVPA3_HOURS)
+hist(ML2039$TVHOURSTOTAL)
+hist(ML2039$EA_DIETSCORE)
+
+###    3.1 sPLIT DATASET INTO TRAINING AND VALIDATION
+
+TrainRowNumbers39<- createDataPartition(ML2039$CNC_01, p=0.80, list=FALSE)
+TrainData39 <- ML2039[TrainRowNumbers39,]
+str(TrainData39)
+
+testData39<- ML2039[-TrainRowNumbers39,]
+str(testData39)
+
+x39=TrainData39[,2:7]
+x39
+
+y39=TrainData39$CNC_01
+y39
+
+str(testData39)
+
+###############  3.5  PRE PROCESS TO TRANSFORM THE DATA
+skim(TrainData39)
+
+#AgeTRmean <- mean(TrainData39$AGE_BL1)
+BMITRmean <- mean(TrainData39$BMI)
+AlcoholTRmean <- mean(TrainData39$SumOfalcohol)
+SmokingTRmean <- mean(TrainData39$CURRENTCIGARRETS)
+PATRmean <- mean(TrainData39$MVPA3_HOURS)
+SedentaryTRmean <- mean(TrainData39$TVHOURSTOTAL)
+DietTRmean <- mean(TrainData39$EA_DIETSCORE)
+
+#AgeTRSD <- sd(TrainData39$AGE_BL1)
+BMITRSD <- sd(TrainData39$BMI)
+AlcoholTRSD <- sd(TrainData39$SumOfalcohol)
+SmokingTRSD <- sd(TrainData39$CURRENTCIGARRETS)
+PATRSD <- sd(TrainData39$MVPA3_HOURS)
+SedentaryTRSD <- sd(TrainData39$TVHOURSTOTAL)
+DietTRSD <- sd(TrainData39$EA_DIETSCORE)
+
+
+#TrainData39$BMI <- log(TrainData39$BMI+1)
+#TrainData39$CURRENTCIGARRETS <-log(TrainData39$CURRENTCIGARRETS+1)
+#TrainData39$MVPA3_HOURS <- log(TrainData39$MVPA3_HOURS+1)
+#TrainData39$SumOfalcohol <- log(TrainData39$SumOfalcohol+1)
+#TrainData39$TVHOURSTOTAL <- log(TrainData39$TVHOURSTOTAL+1)
+
+preProcess_range_model39 <-preProcess(TrainData39, method=c("center","scale"))
+preProcess_range_model39
+preProcess_range_model39$mean
+preProcess_range_model39$std
+preProcess_range_model39$method
+
+
+TrainData39<-predict(preProcess_range_model39, newdata = TrainData39)
+TrainData39
+TrainData39$CNC_01 <- y39
+
+skim(TrainData39)
+
+
+apply(TrainData39 [2:7],2, FUN = function(x4){c('min'=min(x4), 'max'=max(x4))})
+#apply(TrainData39 [2],2, FUN = function(x4){c('min'=min(x4), 'max'=max(x4))})
+
+View(TrainData39)
+str(TrainData39)
+describe(TrainData39)
+describe(testData39)
+skim_to_wide(TrainData39)
+skim_to_wide(testData39)
+
+
+###SET MODEL 5 FOLD CROSSVALIDATON
+
+fitControl39<- trainControl( method = "cv",
+                             number = 5,
+                             savePredictions = "final",
+                             classProbs = TRUE,
+                             summaryFunction = twoClassSummary)
+
+#mtry39<- sqrt(ncol(x39))
+mtry39<-3 
+tunegrid39<-expand.grid(.mtry=mtry39)
+#                      splitrule= c("gini", "extratrees"),
+#                     min.node.size =c(1,3))
+
+##################  RUN THE RANDOM FOREST MODEL WITH CARET PACKAGE
+
+set.seed(100)
+model_rf39cr = train(CNC_01~.,data =TrainData39, method="rf", 
+                   trControl=fitControl39,  
+                   metric="ROC",tuneGrid=tunegrid39, splitrule= c("gini"), ntree=500, importance=TRUE)
+model_rf39cr
+
+# MAIN TABLE FOR RESULTS OF THE MODEL
+model_rf39cr$finalModel$importance
+model_rf39cr$finalModel$importanceSD
+
+
+##################  RUN THE RANDOM FOREST MODEL WITH RANDOM FOREST PACKAGE
+table(testData39$CNC_01)
+table(TrainData39$CNC_01)
+
+set.seed(100)
+model_rf39rf= randomForest(CNC_01~.,data =TrainData39, ntree=500, mtry= 3 , importance=TRUE, proximity= TRUE)
+
+print(model_rf39rf)
+model_rf39rf
+model_rf39rf$forest$nrnodes
+attributes(model_rf39rf)
+model_rf39rf$importance
+
+##############################################################
+
+model_rf39cr$finalModel$importance
+model_rf39cr$finalModel$importanceSD
+model_rf39cr$results
+model_rf39cr$results$ROC
+model_rf39cr$results$ROCSD
+
+
+
+###  PARTIAL DEPENDENCE PLOT #########
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , AGE_BL1, which.class = "CANCER", main = "Classification for cancer survivorship (Age)")
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , AGE_BL1, which.class = "NOCANCER", main = "Classification for non cancer participant (Age)")
+
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , BMI, which.class = "CANCER", main = "Classification for cancer survivorship (BMI)")
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , BMI, which.class = "NOCANCER", main = "Classification for non cancer participant (BMI)")
+
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , SumOfalcohol, which.class = "CANCER", main = "Classification for cancer survivorship (Alcohol)")
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , SumOfalcohol, which.class = "NOCANCER", main = "Classification for non cancer participant (Alcohol)")
+
+
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , EA_DIETSCORE, which.class = "CANCER", main = "Classification for cancer survivorship (Diet)")
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , EA_DIETSCORE, which.class = "NOCANCER", main = "Classification for non cancer participant (Diet)")
+
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , TVHOURSTOTAL, which.class = "CANCER", main = "Classification for cancer survivorship (Sedentary behaviour)")
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , TVHOURSTOTAL, which.class = "NOCANCER", main = "Classification for non cancer participant (Sedentary behaviour)")
+
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , MVPA3_HOURS, which.class = "CANCER", main = "Classification for cancer survivorship (Physical activity)")
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , MVPA3_HOURS, which.class = "NOCANCER", main = "Classification for non cancer participant (Physical activity)")
+
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , CURRENTCIGARRETS, which.class = "CANCER", main = "Classification for cancer survivorship (Smoking)")
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , CURRENTCIGARRETS, which.class = "NOCANCER", main = "Classification for non cancer participant (Smoking)")
+
+
+
+##########SUBSET 5###############
+
+
+ONCOML_RANDOM39 <- read_excel("X:/My Desktop/CLUSTER ANALYSIS/9 VARIABLES/ML/july2019/ML2039 R/ML2039 5.xlsx")
+
+View(ONCOML_RANDOM39)
+ML2039=ONCOML_RANDOM39
+str(ML2039)
+View(ML2039)
+
+ML2039$PSEUDOIDEXT_DR16<-NULL
+ML2039$PSEUDOIDEXT_DR17<-NULL
+#ML2039$AGE_BL1<-NULL
+#ML2039$GESLACHT<-NULL
+#ML2039$EDUCATIONLMH <-NULL
+#ML2039$BMI <-NULL
+#ML2039$SumOfalcohol <-NULL
+#ML2039$MVPA3_HOURS <-NULL
+#ML2039$EA_DIETSCORE <-NULL
+#ML2039$TVHOURSTOTAL <-NULL
+#ML2039$CURRENTCIGARRETS <-NULL
+
+# CATEGORICAL VARIABLES AS FACTORS
+#ONCOML_RANDOM39$CNC_01<-as.factor(ONCOML_RANDOM39$CNC_01)
+
+ML2039$CNC_01<-as.factor(ML2039$CNC_01)
+#ML2039$GESLACHT <- as.factor(ML2039$GESLACHT)
+#ML2039$EDUCATIONLMH <- as.factor(ML2039$EDUCATIONLMH)
+
+str(ML2039)
+View(ML2039)
+skim_to_wide(ML2039)
+
+#hist(ML2039$AGE_BL1)
+hist(ML2039$BMI)
+hist(ML2039$SumOfalcohol)
+hist(ML2039$CURRENTCIGARRETS)
+hist(ML2039$MVPA3_HOURS)
+hist(ML2039$TVHOURSTOTAL)
+hist(ML2039$EA_DIETSCORE)
+
+###    3.1 sPLIT DATASET INTO TRAINING AND VALIDATION
+
+TrainRowNumbers39<- createDataPartition(ML2039$CNC_01, p=0.80, list=FALSE)
+TrainData39 <- ML2039[TrainRowNumbers39,]
+str(TrainData39)
+
+testData39<- ML2039[-TrainRowNumbers39,]
+str(testData39)
+
+x39=TrainData39[,2:7]
+x39
+
+y39=TrainData39$CNC_01
+y39
+
+str(testData39)
+
+###############  3.5  PRE PROCESS TO TRANSFORM THE DATA
+skim(TrainData39)
+
+#AgeTRmean <- mean(TrainData39$AGE_BL1)
+BMITRmean <- mean(TrainData39$BMI)
+AlcoholTRmean <- mean(TrainData39$SumOfalcohol)
+SmokingTRmean <- mean(TrainData39$CURRENTCIGARRETS)
+PATRmean <- mean(TrainData39$MVPA3_HOURS)
+SedentaryTRmean <- mean(TrainData39$TVHOURSTOTAL)
+DietTRmean <- mean(TrainData39$EA_DIETSCORE)
+
+#AgeTRSD <- sd(TrainData39$AGE_BL1)
+BMITRSD <- sd(TrainData39$BMI)
+AlcoholTRSD <- sd(TrainData39$SumOfalcohol)
+SmokingTRSD <- sd(TrainData39$CURRENTCIGARRETS)
+PATRSD <- sd(TrainData39$MVPA3_HOURS)
+SedentaryTRSD <- sd(TrainData39$TVHOURSTOTAL)
+DietTRSD <- sd(TrainData39$EA_DIETSCORE)
+
+
+#TrainData39$BMI <- log(TrainData39$BMI+1)
+#TrainData39$CURRENTCIGARRETS <-log(TrainData39$CURRENTCIGARRETS+1)
+#TrainData39$MVPA3_HOURS <- log(TrainData39$MVPA3_HOURS+1)
+#TrainData39$SumOfalcohol <- log(TrainData39$SumOfalcohol+1)
+#TrainData39$TVHOURSTOTAL <- log(TrainData39$TVHOURSTOTAL+1)
+
+preProcess_range_model39 <-preProcess(TrainData39, method=c("center","scale"))
+preProcess_range_model39
+preProcess_range_model39$mean
+preProcess_range_model39$std
+preProcess_range_model39$method
+
+
+TrainData39<-predict(preProcess_range_model39, newdata = TrainData39)
+TrainData39
+TrainData39$CNC_01 <- y39
+
+skim(TrainData39)
+
+
+apply(TrainData39 [2:7],2, FUN = function(x4){c('min'=min(x4), 'max'=max(x4))})
+#apply(TrainData39 [2],2, FUN = function(x4){c('min'=min(x4), 'max'=max(x4))})
+
+View(TrainData39)
+str(TrainData39)
+describe(TrainData39)
+describe(testData39)
+skim_to_wide(TrainData39)
+skim_to_wide(testData39)
+
+
+###SET MODEL 5 FOLD CROSSVALIDATON
+
+fitControl39<- trainControl( method = "cv",
+                             number = 5,
+                             savePredictions = "final",
+                             classProbs = TRUE,
+                             summaryFunction = twoClassSummary)
+
+#mtry39<- sqrt(ncol(x39))
+mtry39<-3 
+tunegrid39<-expand.grid(.mtry=mtry39)
+#                      splitrule= c("gini", "extratrees"),
+#                     min.node.size =c(1,3))
+
+##################  RUN THE RANDOM FOREST MODEL WITH CARET PACKAGE
+
+set.seed(100)
+model_rf39cr = train(CNC_01~.,data =TrainData39, method="rf", 
+                   trControl=fitControl39,  
+                   metric="ROC",tuneGrid=tunegrid39, splitrule= c("gini"), ntree=500, importance=TRUE)
+model_rf39cr
+
+# MAIN TABLE FOR RESULTS OF THE MODEL
+model_rf39cr$finalModel$importance
+model_rf39cr$finalModel$importanceSD
+
+
+##################  RUN THE RANDOM FOREST MODEL WITH RANDOM FOREST PACKAGE
+table(testData39$CNC_01)
+table(TrainData39$CNC_01)
+
+set.seed(100)
+model_rf39rf= randomForest(CNC_01~.,data =TrainData39, ntree=500, mtry= 3 , importance=TRUE, proximity= TRUE)
+
+print(model_rf39rf)
+model_rf39rf
+model_rf39rf$forest$nrnodes
+attributes(model_rf39rf)
+model_rf39rf$importance
+
+##############################################################
+
+model_rf39cr$finalModel$importance
+model_rf39cr$finalModel$importanceSD
+model_rf39cr$results
+model_rf39cr$results$ROC
+model_rf39cr$results$ROCSD
+
+
+
+###  PARTIAL DEPENDENCE PLOT #########
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , AGE_BL1, which.class = "CANCER", main = "Classification for cancer survivorship (Age)")
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , AGE_BL1, which.class = "NOCANCER", main = "Classification for non cancer participant (Age)")
+
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , BMI, which.class = "CANCER", main = "Classification for cancer survivorship (BMI)")
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , BMI, which.class = "NOCANCER", main = "Classification for non cancer participant (BMI)")
+
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , SumOfalcohol, which.class = "CANCER", main = "Classification for cancer survivorship (Alcohol)")
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , SumOfalcohol, which.class = "NOCANCER", main = "Classification for non cancer participant (Alcohol)")
+
+
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , EA_DIETSCORE, which.class = "CANCER", main = "Classification for cancer survivorship (Diet)")
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , EA_DIETSCORE, which.class = "NOCANCER", main = "Classification for non cancer participant (Diet)")
+
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , TVHOURSTOTAL, which.class = "CANCER", main = "Classification for cancer survivorship (Sedentary behaviour)")
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , TVHOURSTOTAL, which.class = "NOCANCER", main = "Classification for non cancer participant (Sedentary behaviour)")
+
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , MVPA3_HOURS, which.class = "CANCER", main = "Classification for cancer survivorship (Physical activity)")
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , MVPA3_HOURS, which.class = "NOCANCER", main = "Classification for non cancer participant (Physical activity)")
+
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , CURRENTCIGARRETS, which.class = "CANCER", main = "Classification for cancer survivorship (Smoking)")
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , CURRENTCIGARRETS, which.class = "NOCANCER", main = "Classification for non cancer participant (Smoking)")
+
+
+##########SUBSET 6###############
+
+
+ONCOML_RANDOM39 <- read_excel("X:/My Desktop/CLUSTER ANALYSIS/9 VARIABLES/ML/july2019/ML2039 R/ML2039 6.xlsx")
+
+View(ONCOML_RANDOM39)
+ML2039=ONCOML_RANDOM39
+str(ML2039)
+View(ML2039)
+
+ML2039$PSEUDOIDEXT_DR16<-NULL
+ML2039$PSEUDOIDEXT_DR17<-NULL
+#ML2039$AGE_BL1<-NULL
+#ML2039$GESLACHT<-NULL
+#ML2039$EDUCATIONLMH <-NULL
+#ML2039$BMI <-NULL
+#ML2039$SumOfalcohol <-NULL
+#ML2039$MVPA3_HOURS <-NULL
+#ML2039$EA_DIETSCORE <-NULL
+#ML2039$TVHOURSTOTAL <-NULL
+#ML2039$CURRENTCIGARRETS <-NULL
+
+# CATEGORICAL VARIABLES AS FACTORS
+#ONCOML_RANDOM39$CNC_01<-as.factor(ONCOML_RANDOM39$CNC_01)
+
+ML2039$CNC_01<-as.factor(ML2039$CNC_01)
+#ML2039$GESLACHT <- as.factor(ML2039$GESLACHT)
+#ML2039$EDUCATIONLMH <- as.factor(ML2039$EDUCATIONLMH)
+
+str(ML2039)
+View(ML2039)
+skim_to_wide(ML2039)
+
+#hist(ML2039$AGE_BL1)
+hist(ML2039$BMI)
+hist(ML2039$SumOfalcohol)
+hist(ML2039$CURRENTCIGARRETS)
+hist(ML2039$MVPA3_HOURS)
+hist(ML2039$TVHOURSTOTAL)
+hist(ML2039$EA_DIETSCORE)
+
+###    3.1 sPLIT DATASET INTO TRAINING AND VALIDATION
+
+TrainRowNumbers39<- createDataPartition(ML2039$CNC_01, p=0.80, list=FALSE)
+TrainData39 <- ML2039[TrainRowNumbers39,]
+str(TrainData39)
+
+testData39<- ML2039[-TrainRowNumbers39,]
+str(testData39)
+
+x39=TrainData39[,2:7]
+x39
+
+y39=TrainData39$CNC_01
+y39
+
+str(testData39)
+
+###############  3.5  PRE PROCESS TO TRANSFORM THE DATA
+skim(TrainData39)
+
+#AgeTRmean <- mean(TrainData39$AGE_BL1)
+BMITRmean <- mean(TrainData39$BMI)
+AlcoholTRmean <- mean(TrainData39$SumOfalcohol)
+SmokingTRmean <- mean(TrainData39$CURRENTCIGARRETS)
+PATRmean <- mean(TrainData39$MVPA3_HOURS)
+SedentaryTRmean <- mean(TrainData39$TVHOURSTOTAL)
+DietTRmean <- mean(TrainData39$EA_DIETSCORE)
+
+#AgeTRSD <- sd(TrainData39$AGE_BL1)
+BMITRSD <- sd(TrainData39$BMI)
+AlcoholTRSD <- sd(TrainData39$SumOfalcohol)
+SmokingTRSD <- sd(TrainData39$CURRENTCIGARRETS)
+PATRSD <- sd(TrainData39$MVPA3_HOURS)
+SedentaryTRSD <- sd(TrainData39$TVHOURSTOTAL)
+DietTRSD <- sd(TrainData39$EA_DIETSCORE)
+
+
+#TrainData39$BMI <- log(TrainData39$BMI+1)
+#TrainData39$CURRENTCIGARRETS <-log(TrainData39$CURRENTCIGARRETS+1)
+#TrainData39$MVPA3_HOURS <- log(TrainData39$MVPA3_HOURS+1)
+#TrainData39$SumOfalcohol <- log(TrainData39$SumOfalcohol+1)
+#TrainData39$TVHOURSTOTAL <- log(TrainData39$TVHOURSTOTAL+1)
+
+preProcess_range_model39 <-preProcess(TrainData39, method=c("center","scale"))
+preProcess_range_model39
+preProcess_range_model39$mean
+preProcess_range_model39$std
+preProcess_range_model39$method
+
+
+TrainData39<-predict(preProcess_range_model39, newdata = TrainData39)
+TrainData39
+TrainData39$CNC_01 <- y39
+
+skim(TrainData39)
+
+
+apply(TrainData39 [2:7],2, FUN = function(x4){c('min'=min(x4), 'max'=max(x4))})
+#apply(TrainData39 [2],2, FUN = function(x4){c('min'=min(x4), 'max'=max(x4))})
+
+View(TrainData39)
+str(TrainData39)
+describe(TrainData39)
+describe(testData39)
+skim_to_wide(TrainData39)
+skim_to_wide(testData39)
+
+
+###SET MODEL 5 FOLD CROSSVALIDATON
+
+fitControl39<- trainControl( method = "cv",
+                             number = 5,
+                             savePredictions = "final",
+                             classProbs = TRUE,
+                             summaryFunction = twoClassSummary)
+
+#mtry39<- sqrt(ncol(x39))
+mtry39<-3 
+tunegrid39<-expand.grid(.mtry=mtry39)
+#                      splitrule= c("gini", "extratrees"),
+#                     min.node.size =c(1,3))
+
+##################  RUN THE RANDOM FOREST MODEL WITH CARET PACKAGE
+
+set.seed(100)
+model_rf39cr = train(CNC_01~.,data =TrainData39, method="rf", 
+                   trControl=fitControl39,  
+                   metric="ROC",tuneGrid=tunegrid39, splitrule= c("gini"), ntree=500, importance=TRUE)
+model_rf39cr
+
+# MAIN TABLE FOR RESULTS OF THE MODEL
+model_rf39cr$finalModel$importance
+model_rf39cr$finalModel$importanceSD
+
+
+##################  RUN THE RANDOM FOREST MODEL WITH RANDOM FOREST PACKAGE
+table(testData39$CNC_01)
+table(TrainData39$CNC_01)
+
+set.seed(100)
+model_rf39rf= randomForest(CNC_01~.,data =TrainData39, ntree=500, mtry= 3 , importance=TRUE, proximity= TRUE)
+
+print(model_rf39rf)
+model_rf39rf
+model_rf39rf$forest$nrnodes
+attributes(model_rf39rf)
+model_rf39rf$importance
+
+##############################################################
+
+model_rf39cr$finalModel$importance
+model_rf39cr$finalModel$importanceSD
+model_rf39cr$results
+model_rf39cr$results$ROC
+model_rf39cr$results$ROCSD
+
+
+
+###  PARTIAL DEPENDENCE PLOT #########
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , AGE_BL1, which.class = "CANCER", main = "Classification for cancer survivorship (Age)")
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , AGE_BL1, which.class = "NOCANCER", main = "Classification for non cancer participant (Age)")
+
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , BMI, which.class = "CANCER", main = "Classification for cancer survivorship (BMI)")
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , BMI, which.class = "NOCANCER", main = "Classification for non cancer participant (BMI)")
+
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , SumOfalcohol, which.class = "CANCER", main = "Classification for cancer survivorship (Alcohol)")
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , SumOfalcohol, which.class = "NOCANCER", main = "Classification for non cancer participant (Alcohol)")
+
+
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , EA_DIETSCORE, which.class = "CANCER", main = "Classification for cancer survivorship (Diet)")
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , EA_DIETSCORE, which.class = "NOCANCER", main = "Classification for non cancer participant (Diet)")
+
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , TVHOURSTOTAL, which.class = "CANCER", main = "Classification for cancer survivorship (Sedentary behaviour)")
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , TVHOURSTOTAL, which.class = "NOCANCER", main = "Classification for non cancer participant (Sedentary behaviour)")
+
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , MVPA3_HOURS, which.class = "CANCER", main = "Classification for cancer survivorship (Physical activity)")
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , MVPA3_HOURS, which.class = "NOCANCER", main = "Classification for non cancer participant (Physical activity)")
+
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , CURRENTCIGARRETS, which.class = "CANCER", main = "Classification for cancer survivorship (Smoking)")
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , CURRENTCIGARRETS, which.class = "NOCANCER", main = "Classification for non cancer participant (Smoking)")
+
+
+
+
+
+##########SUBSET 7###############
+
+
+ONCOML_RANDOM39 <- read_excel("X:/My Desktop/CLUSTER ANALYSIS/9 VARIABLES/ML/july2019/ML2039 R/ML2039 7.xlsx")
+
+View(ONCOML_RANDOM39)
+ML2039=ONCOML_RANDOM39
+str(ML2039)
+View(ML2039)
+
+ML2039$PSEUDOIDEXT_DR16<-NULL
+ML2039$PSEUDOIDEXT_DR17<-NULL
+#ML2039$AGE_BL1<-NULL
+#ML2039$GESLACHT<-NULL
+#ML2039$EDUCATIONLMH <-NULL
+#ML2039$BMI <-NULL
+#ML2039$SumOfalcohol <-NULL
+#ML2039$MVPA3_HOURS <-NULL
+#ML2039$EA_DIETSCORE <-NULL
+#ML2039$TVHOURSTOTAL <-NULL
+#ML2039$CURRENTCIGARRETS <-NULL
+
+# CATEGORICAL VARIABLES AS FACTORS
+#ONCOML_RANDOM39$CNC_01<-as.factor(ONCOML_RANDOM39$CNC_01)
+
+ML2039$CNC_01<-as.factor(ML2039$CNC_01)
+#ML2039$GESLACHT <- as.factor(ML2039$GESLACHT)
+#ML2039$EDUCATIONLMH <- as.factor(ML2039$EDUCATIONLMH)
+
+str(ML2039)
+View(ML2039)
+skim_to_wide(ML2039)
+
+#hist(ML2039$AGE_BL1)
+hist(ML2039$BMI)
+hist(ML2039$SumOfalcohol)
+hist(ML2039$CURRENTCIGARRETS)
+hist(ML2039$MVPA3_HOURS)
+hist(ML2039$TVHOURSTOTAL)
+hist(ML2039$EA_DIETSCORE)
+
+###    3.1 sPLIT DATASET INTO TRAINING AND VALIDATION
+
+TrainRowNumbers39<- createDataPartition(ML2039$CNC_01, p=0.80, list=FALSE)
+TrainData39 <- ML2039[TrainRowNumbers39,]
+str(TrainData39)
+
+testData39<- ML2039[-TrainRowNumbers39,]
+str(testData39)
+
+x39=TrainData39[,2:7]
+x39
+
+y39=TrainData39$CNC_01
+y39
+
+str(testData39)
+
+###############  3.5  PRE PROCESS TO TRANSFORM THE DATA
+skim(TrainData39)
+
+#AgeTRmean <- mean(TrainData39$AGE_BL1)
+BMITRmean <- mean(TrainData39$BMI)
+AlcoholTRmean <- mean(TrainData39$SumOfalcohol)
+SmokingTRmean <- mean(TrainData39$CURRENTCIGARRETS)
+PATRmean <- mean(TrainData39$MVPA3_HOURS)
+SedentaryTRmean <- mean(TrainData39$TVHOURSTOTAL)
+DietTRmean <- mean(TrainData39$EA_DIETSCORE)
+
+#AgeTRSD <- sd(TrainData39$AGE_BL1)
+BMITRSD <- sd(TrainData39$BMI)
+AlcoholTRSD <- sd(TrainData39$SumOfalcohol)
+SmokingTRSD <- sd(TrainData39$CURRENTCIGARRETS)
+PATRSD <- sd(TrainData39$MVPA3_HOURS)
+SedentaryTRSD <- sd(TrainData39$TVHOURSTOTAL)
+DietTRSD <- sd(TrainData39$EA_DIETSCORE)
+
+
+#TrainData39$BMI <- log(TrainData39$BMI+1)
+#TrainData39$CURRENTCIGARRETS <-log(TrainData39$CURRENTCIGARRETS+1)
+#TrainData39$MVPA3_HOURS <- log(TrainData39$MVPA3_HOURS+1)
+#TrainData39$SumOfalcohol <- log(TrainData39$SumOfalcohol+1)
+#TrainData39$TVHOURSTOTAL <- log(TrainData39$TVHOURSTOTAL+1)
+
+preProcess_range_model39 <-preProcess(TrainData39, method=c("center","scale"))
+preProcess_range_model39
+preProcess_range_model39$mean
+preProcess_range_model39$std
+preProcess_range_model39$method
+
+
+TrainData39<-predict(preProcess_range_model39, newdata = TrainData39)
+TrainData39
+TrainData39$CNC_01 <- y39
+
+skim(TrainData39)
+
+
+apply(TrainData39 [2:7],2, FUN = function(x4){c('min'=min(x4), 'max'=max(x4))})
+#apply(TrainData39 [2],2, FUN = function(x4){c('min'=min(x4), 'max'=max(x4))})
+
+View(TrainData39)
+str(TrainData39)
+describe(TrainData39)
+describe(testData39)
+skim_to_wide(TrainData39)
+skim_to_wide(testData39)
+
+
+###SET MODEL 5 FOLD CROSSVALIDATON
+
+fitControl39<- trainControl( method = "cv",
+                             number = 5,
+                             savePredictions = "final",
+                             classProbs = TRUE,
+                             summaryFunction = twoClassSummary)
+
+#mtry39<- sqrt(ncol(x39))
+mtry39<-3 
+tunegrid39<-expand.grid(.mtry=mtry39)
+#                      splitrule= c("gini", "extratrees"),
+#                     min.node.size =c(1,3))
+
+##################  RUN THE RANDOM FOREST MODEL WITH CARET PACKAGE
+
+set.seed(100)
+model_rf39cr = train(CNC_01~.,data =TrainData39, method="rf", 
+                   trControl=fitControl39,  
+                   metric="ROC",tuneGrid=tunegrid39, splitrule= c("gini"), ntree=500, importance=TRUE)
+model_rf39cr
+
+# MAIN TABLE FOR RESULTS OF THE MODEL
+model_rf39cr$finalModel$importance
+model_rf39cr$finalModel$importanceSD
+
+
+##################  RUN THE RANDOM FOREST MODEL WITH RANDOM FOREST PACKAGE
+table(testData39$CNC_01)
+table(TrainData39$CNC_01)
+
+set.seed(100)
+model_rf39rf= randomForest(CNC_01~.,data =TrainData39, ntree=500, mtry= 3 , importance=TRUE, proximity= TRUE)
+
+print(model_rf39rf)
+model_rf39rf
+model_rf39rf$forest$nrnodes
+attributes(model_rf39rf)
+model_rf39rf$importance
+
+##############################################################
+
+model_rf39cr$finalModel$importance
+model_rf39cr$finalModel$importanceSD
+model_rf39cr$results
+model_rf39cr$results$ROC
+model_rf39cr$results$ROCSD
+
+
+
+###  PARTIAL DEPENDENCE PLOT #########
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , AGE_BL1, which.class = "CANCER", main = "Classification for cancer survivorship (Age)")
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , AGE_BL1, which.class = "NOCANCER", main = "Classification for non cancer participant (Age)")
+
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , BMI, which.class = "CANCER", main = "Classification for cancer survivorship (BMI)")
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , BMI, which.class = "NOCANCER", main = "Classification for non cancer participant (BMI)")
+
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , SumOfalcohol, which.class = "CANCER", main = "Classification for cancer survivorship (Alcohol)")
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , SumOfalcohol, which.class = "NOCANCER", main = "Classification for non cancer participant (Alcohol)")
+
+
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , EA_DIETSCORE, which.class = "CANCER", main = "Classification for cancer survivorship (Diet)")
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , EA_DIETSCORE, which.class = "NOCANCER", main = "Classification for non cancer participant (Diet)")
+
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , TVHOURSTOTAL, which.class = "CANCER", main = "Classification for cancer survivorship (Sedentary behaviour)")
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , TVHOURSTOTAL, which.class = "NOCANCER", main = "Classification for non cancer participant (Sedentary behaviour)")
+
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , MVPA3_HOURS, which.class = "CANCER", main = "Classification for cancer survivorship (Physical activity)")
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , MVPA3_HOURS, which.class = "NOCANCER", main = "Classification for non cancer participant (Physical activity)")
+
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , CURRENTCIGARRETS, which.class = "CANCER", main = "Classification for cancer survivorship (Smoking)")
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , CURRENTCIGARRETS, which.class = "NOCANCER", main = "Classification for non cancer participant (Smoking)")
+
+
+
+##########SUBSET 8###############
+
+
+ONCOML_RANDOM39 <- read_excel("X:/My Desktop/CLUSTER ANALYSIS/9 VARIABLES/ML/july2019/ML2039 R/ML2039 8.xlsx")
+
+View(ONCOML_RANDOM39)
+ML2039=ONCOML_RANDOM39
+str(ML2039)
+View(ML2039)
+
+ML2039$PSEUDOIDEXT_DR16<-NULL
+ML2039$PSEUDOIDEXT_DR17<-NULL
+#ML2039$AGE_BL1<-NULL
+#ML2039$GESLACHT<-NULL
+#ML2039$EDUCATIONLMH <-NULL
+#ML2039$BMI <-NULL
+#ML2039$SumOfalcohol <-NULL
+#ML2039$MVPA3_HOURS <-NULL
+#ML2039$EA_DIETSCORE <-NULL
+#ML2039$TVHOURSTOTAL <-NULL
+#ML2039$CURRENTCIGARRETS <-NULL
+
+# CATEGORICAL VARIABLES AS FACTORS
+#ONCOML_RANDOM39$CNC_01<-as.factor(ONCOML_RANDOM39$CNC_01)
+
+ML2039$CNC_01<-as.factor(ML2039$CNC_01)
+#ML2039$GESLACHT <- as.factor(ML2039$GESLACHT)
+#ML2039$EDUCATIONLMH <- as.factor(ML2039$EDUCATIONLMH)
+
+str(ML2039)
+View(ML2039)
+skim_to_wide(ML2039)
+
+#hist(ML2039$AGE_BL1)
+hist(ML2039$BMI)
+hist(ML2039$SumOfalcohol)
+hist(ML2039$CURRENTCIGARRETS)
+hist(ML2039$MVPA3_HOURS)
+hist(ML2039$TVHOURSTOTAL)
+hist(ML2039$EA_DIETSCORE)
+
+###    3.1 sPLIT DATASET INTO TRAINING AND VALIDATION
+
+TrainRowNumbers39<- createDataPartition(ML2039$CNC_01, p=0.80, list=FALSE)
+TrainData39 <- ML2039[TrainRowNumbers39,]
+str(TrainData39)
+
+testData39<- ML2039[-TrainRowNumbers39,]
+str(testData39)
+
+x39=TrainData39[,2:7]
+x39
+
+y39=TrainData39$CNC_01
+y39
+
+str(testData39)
+
+###############  3.5  PRE PROCESS TO TRANSFORM THE DATA
+skim(TrainData39)
+
+#AgeTRmean <- mean(TrainData39$AGE_BL1)
+BMITRmean <- mean(TrainData39$BMI)
+AlcoholTRmean <- mean(TrainData39$SumOfalcohol)
+SmokingTRmean <- mean(TrainData39$CURRENTCIGARRETS)
+PATRmean <- mean(TrainData39$MVPA3_HOURS)
+SedentaryTRmean <- mean(TrainData39$TVHOURSTOTAL)
+DietTRmean <- mean(TrainData39$EA_DIETSCORE)
+
+#AgeTRSD <- sd(TrainData39$AGE_BL1)
+BMITRSD <- sd(TrainData39$BMI)
+AlcoholTRSD <- sd(TrainData39$SumOfalcohol)
+SmokingTRSD <- sd(TrainData39$CURRENTCIGARRETS)
+PATRSD <- sd(TrainData39$MVPA3_HOURS)
+SedentaryTRSD <- sd(TrainData39$TVHOURSTOTAL)
+DietTRSD <- sd(TrainData39$EA_DIETSCORE)
+
+
+#TrainData39$BMI <- log(TrainData39$BMI+1)
+#TrainData39$CURRENTCIGARRETS <-log(TrainData39$CURRENTCIGARRETS+1)
+#TrainData39$MVPA3_HOURS <- log(TrainData39$MVPA3_HOURS+1)
+#TrainData39$SumOfalcohol <- log(TrainData39$SumOfalcohol+1)
+#TrainData39$TVHOURSTOTAL <- log(TrainData39$TVHOURSTOTAL+1)
+
+preProcess_range_model39 <-preProcess(TrainData39, method=c("center","scale"))
+preProcess_range_model39
+preProcess_range_model39$mean
+preProcess_range_model39$std
+preProcess_range_model39$method
+
+
+TrainData39<-predict(preProcess_range_model39, newdata = TrainData39)
+TrainData39
+TrainData39$CNC_01 <- y39
+
+skim(TrainData39)
+
+
+apply(TrainData39 [2:7],2, FUN = function(x4){c('min'=min(x4), 'max'=max(x4))})
+#apply(TrainData39 [2],2, FUN = function(x4){c('min'=min(x4), 'max'=max(x4))})
+
+View(TrainData39)
+str(TrainData39)
+describe(TrainData39)
+describe(testData39)
+skim_to_wide(TrainData39)
+skim_to_wide(testData39)
+
+
+###SET MODEL 5 FOLD CROSSVALIDATON
+
+fitControl39<- trainControl( method = "cv",
+                             number = 5,
+                             savePredictions = "final",
+                             classProbs = TRUE,
+                             summaryFunction = twoClassSummary)
+
+#mtry39<- sqrt(ncol(x39))
+mtry39<-3 
+tunegrid39<-expand.grid(.mtry=mtry39)
+#                      splitrule= c("gini", "extratrees"),
+#                     min.node.size =c(1,3))
+
+##################  RUN THE RANDOM FOREST MODEL WITH CARET PACKAGE
+
+set.seed(100)
+model_rf39cr = train(CNC_01~.,data =TrainData39, method="rf", 
+                   trControl=fitControl39,  
+                   metric="ROC",tuneGrid=tunegrid39, splitrule= c("gini"), ntree=500, importance=TRUE)
+model_rf39cr
+
+# MAIN TABLE FOR RESULTS OF THE MODEL
+model_rf39cr$finalModel$importance
+model_rf39cr$finalModel$importanceSD
+
+
+##################  RUN THE RANDOM FOREST MODEL WITH RANDOM FOREST PACKAGE
+table(testData39$CNC_01)
+table(TrainData39$CNC_01)
+
+set.seed(100)
+model_rf39rf= randomForest(CNC_01~.,data =TrainData39, ntree=500, mtry= 3 , importance=TRUE, proximity= TRUE)
+
+print(model_rf39rf)
+model_rf39rf
+model_rf39rf$forest$nrnodes
+attributes(model_rf39rf)
+model_rf39rf$importance
+
+##############################################################
+
+model_rf39cr$finalModel$importance
+model_rf39cr$finalModel$importanceSD
+model_rf39cr$results
+model_rf39cr$results$ROC
+model_rf39cr$results$ROCSD
+
+
+
+###  PARTIAL DEPENDENCE PLOT #########
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , AGE_BL1, which.class = "CANCER", main = "Classification for cancer survivorship (Age)")
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , AGE_BL1, which.class = "NOCANCER", main = "Classification for non cancer participant (Age)")
+
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , BMI, which.class = "CANCER", main = "Classification for cancer survivorship (BMI)")
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , BMI, which.class = "NOCANCER", main = "Classification for non cancer participant (BMI)")
+
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , SumOfalcohol, which.class = "CANCER", main = "Classification for cancer survivorship (Alcohol)")
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , SumOfalcohol, which.class = "NOCANCER", main = "Classification for non cancer participant (Alcohol)")
+
+
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , EA_DIETSCORE, which.class = "CANCER", main = "Classification for cancer survivorship (Diet)")
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , EA_DIETSCORE, which.class = "NOCANCER", main = "Classification for non cancer participant (Diet)")
+
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , TVHOURSTOTAL, which.class = "CANCER", main = "Classification for cancer survivorship (Sedentary behaviour)")
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , TVHOURSTOTAL, which.class = "NOCANCER", main = "Classification for non cancer participant (Sedentary behaviour)")
+
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , MVPA3_HOURS, which.class = "CANCER", main = "Classification for cancer survivorship (Physical activity)")
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , MVPA3_HOURS, which.class = "NOCANCER", main = "Classification for non cancer participant (Physical activity)")
+
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , CURRENTCIGARRETS, which.class = "CANCER", main = "Classification for cancer survivorship (Smoking)")
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , CURRENTCIGARRETS, which.class = "NOCANCER", main = "Classification for non cancer participant (Smoking)")
+
+
+
+
+
+##########SUBSET 9###############
+
+
+ONCOML_RANDOM39 <- read_excel("X:/My Desktop/CLUSTER ANALYSIS/9 VARIABLES/ML/july2019/ML2039 R/ML2039 9.xlsx")
+
+View(ONCOML_RANDOM39)
+ML2039=ONCOML_RANDOM39
+str(ML2039)
+View(ML2039)
+
+ML2039$PSEUDOIDEXT_DR16<-NULL
+ML2039$PSEUDOIDEXT_DR17<-NULL
+#ML2039$AGE_BL1<-NULL
+#ML2039$GESLACHT<-NULL
+#ML2039$EDUCATIONLMH <-NULL
+#ML2039$BMI <-NULL
+#ML2039$SumOfalcohol <-NULL
+#ML2039$MVPA3_HOURS <-NULL
+#ML2039$EA_DIETSCORE <-NULL
+#ML2039$TVHOURSTOTAL <-NULL
+#ML2039$CURRENTCIGARRETS <-NULL
+
+# CATEGORICAL VARIABLES AS FACTORS
+#ONCOML_RANDOM39$CNC_01<-as.factor(ONCOML_RANDOM39$CNC_01)
+
+ML2039$CNC_01<-as.factor(ML2039$CNC_01)
+#ML2039$GESLACHT <- as.factor(ML2039$GESLACHT)
+#ML2039$EDUCATIONLMH <- as.factor(ML2039$EDUCATIONLMH)
+
+str(ML2039)
+View(ML2039)
+skim_to_wide(ML2039)
+
+#hist(ML2039$AGE_BL1)
+hist(ML2039$BMI)
+hist(ML2039$SumOfalcohol)
+hist(ML2039$CURRENTCIGARRETS)
+hist(ML2039$MVPA3_HOURS)
+hist(ML2039$TVHOURSTOTAL)
+hist(ML2039$EA_DIETSCORE)
+
+###    3.1 sPLIT DATASET INTO TRAINING AND VALIDATION
+
+TrainRowNumbers39<- createDataPartition(ML2039$CNC_01, p=0.80, list=FALSE)
+TrainData39 <- ML2039[TrainRowNumbers39,]
+str(TrainData39)
+
+testData39<- ML2039[-TrainRowNumbers39,]
+str(testData39)
+
+x39=TrainData39[,2:7]
+x39
+
+y39=TrainData39$CNC_01
+y39
+
+str(testData39)
+
+###############  3.5  PRE PROCESS TO TRANSFORM THE DATA
+skim(TrainData39)
+
+#AgeTRmean <- mean(TrainData39$AGE_BL1)
+BMITRmean <- mean(TrainData39$BMI)
+AlcoholTRmean <- mean(TrainData39$SumOfalcohol)
+SmokingTRmean <- mean(TrainData39$CURRENTCIGARRETS)
+PATRmean <- mean(TrainData39$MVPA3_HOURS)
+SedentaryTRmean <- mean(TrainData39$TVHOURSTOTAL)
+DietTRmean <- mean(TrainData39$EA_DIETSCORE)
+
+#AgeTRSD <- sd(TrainData39$AGE_BL1)
+BMITRSD <- sd(TrainData39$BMI)
+AlcoholTRSD <- sd(TrainData39$SumOfalcohol)
+SmokingTRSD <- sd(TrainData39$CURRENTCIGARRETS)
+PATRSD <- sd(TrainData39$MVPA3_HOURS)
+SedentaryTRSD <- sd(TrainData39$TVHOURSTOTAL)
+DietTRSD <- sd(TrainData39$EA_DIETSCORE)
+
+
+#TrainData39$BMI <- log(TrainData39$BMI+1)
+#TrainData39$CURRENTCIGARRETS <-log(TrainData39$CURRENTCIGARRETS+1)
+#TrainData39$MVPA3_HOURS <- log(TrainData39$MVPA3_HOURS+1)
+#TrainData39$SumOfalcohol <- log(TrainData39$SumOfalcohol+1)
+#TrainData39$TVHOURSTOTAL <- log(TrainData39$TVHOURSTOTAL+1)
+
+preProcess_range_model39 <-preProcess(TrainData39, method=c("center","scale"))
+preProcess_range_model39
+preProcess_range_model39$mean
+preProcess_range_model39$std
+preProcess_range_model39$method
+
+
+TrainData39<-predict(preProcess_range_model39, newdata = TrainData39)
+TrainData39
+TrainData39$CNC_01 <- y39
+
+skim(TrainData39)
+
+
+apply(TrainData39 [2:7],2, FUN = function(x4){c('min'=min(x4), 'max'=max(x4))})
+#apply(TrainData39 [2],2, FUN = function(x4){c('min'=min(x4), 'max'=max(x4))})
+
+View(TrainData39)
+str(TrainData39)
+describe(TrainData39)
+describe(testData39)
+skim_to_wide(TrainData39)
+skim_to_wide(testData39)
+
+
+###SET MODEL 5 FOLD CROSSVALIDATON
+
+fitControl39<- trainControl( method = "cv",
+                             number = 5,
+                             savePredictions = "final",
+                             classProbs = TRUE,
+                             summaryFunction = twoClassSummary)
+
+#mtry39<- sqrt(ncol(x39))
+mtry39<-3 
+tunegrid39<-expand.grid(.mtry=mtry39)
+#                      splitrule= c("gini", "extratrees"),
+#                     min.node.size =c(1,3))
+
+##################  RUN THE RANDOM FOREST MODEL WITH CARET PACKAGE
+
+set.seed(100)
+model_rf39cr = train(CNC_01~.,data =TrainData39, method="rf", 
+                   trControl=fitControl39,  
+                   metric="ROC",tuneGrid=tunegrid39, splitrule= c("gini"), ntree=500, importance=TRUE)
+model_rf39cr
+
+# MAIN TABLE FOR RESULTS OF THE MODEL
+model_rf39cr$finalModel$importance
+model_rf39cr$finalModel$importanceSD
+
+
+##################  RUN THE RANDOM FOREST MODEL WITH RANDOM FOREST PACKAGE
+table(testData39$CNC_01)
+table(TrainData39$CNC_01)
+
+set.seed(100)
+model_rf39rf= randomForest(CNC_01~.,data =TrainData39, ntree=500, mtry= 3 , importance=TRUE, proximity= TRUE)
+
+print(model_rf39rf)
+model_rf39rf
+model_rf39rf$forest$nrnodes
+attributes(model_rf39rf)
+model_rf39rf$importance
+
+##############################################################
+
+model_rf39cr$finalModel$importance
+model_rf39cr$finalModel$importanceSD
+model_rf39cr$results
+model_rf39cr$results$ROC
+model_rf39cr$results$ROCSD
+
+
+
+###  PARTIAL DEPENDENCE PLOT #########
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , AGE_BL1, which.class = "CANCER", main = "Classification for cancer survivorship (Age)")
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , AGE_BL1, which.class = "NOCANCER", main = "Classification for non cancer participant (Age)")
+
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , BMI, which.class = "CANCER", main = "Classification for cancer survivorship (BMI)")
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , BMI, which.class = "NOCANCER", main = "Classification for non cancer participant (BMI)")
+
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , SumOfalcohol, which.class = "CANCER", main = "Classification for cancer survivorship (Alcohol)")
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , SumOfalcohol, which.class = "NOCANCER", main = "Classification for non cancer participant (Alcohol)")
+
+
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , EA_DIETSCORE, which.class = "CANCER", main = "Classification for cancer survivorship (Diet)")
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , EA_DIETSCORE, which.class = "NOCANCER", main = "Classification for non cancer participant (Diet)")
+
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , TVHOURSTOTAL, which.class = "CANCER", main = "Classification for cancer survivorship (Sedentary behaviour)")
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , TVHOURSTOTAL, which.class = "NOCANCER", main = "Classification for non cancer participant (Sedentary behaviour)")
+
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , MVPA3_HOURS, which.class = "CANCER", main = "Classification for cancer survivorship (Physical activity)")
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , MVPA3_HOURS, which.class = "NOCANCER", main = "Classification for non cancer participant (Physical activity)")
+
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , CURRENTCIGARRETS, which.class = "CANCER", main = "Classification for cancer survivorship (Smoking)")
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , CURRENTCIGARRETS, which.class = "NOCANCER", main = "Classification for non cancer participant (Smoking)")
+
+
+
+##########SUBSET 10###############
+
+
+ONCOML_RANDOM39 <- read_excel("X:/My Desktop/CLUSTER ANALYSIS/9 VARIABLES/ML/july2019/ML2039 R/ML2039 10.xlsx")
+
+View(ONCOML_RANDOM39)
+ML2039=ONCOML_RANDOM39
+str(ML2039)
+View(ML2039)
+
+ML2039$PSEUDOIDEXT_DR16<-NULL
+ML2039$PSEUDOIDEXT_DR17<-NULL
+#ML2039$AGE_BL1<-NULL
+#ML2039$GESLACHT<-NULL
+#ML2039$EDUCATIONLMH <-NULL
+#ML2039$BMI <-NULL
+#ML2039$SumOfalcohol <-NULL
+#ML2039$MVPA3_HOURS <-NULL
+#ML2039$EA_DIETSCORE <-NULL
+#ML2039$TVHOURSTOTAL <-NULL
+#ML2039$CURRENTCIGARRETS <-NULL
+
+# CATEGORICAL VARIABLES AS FACTORS
+#ONCOML_RANDOM39$CNC_01<-as.factor(ONCOML_RANDOM39$CNC_01)
+
+ML2039$CNC_01<-as.factor(ML2039$CNC_01)
+#ML2039$GESLACHT <- as.factor(ML2039$GESLACHT)
+#ML2039$EDUCATIONLMH <- as.factor(ML2039$EDUCATIONLMH)
+
+str(ML2039)
+View(ML2039)
+skim_to_wide(ML2039)
+
+#hist(ML2039$AGE_BL1)
+hist(ML2039$BMI)
+hist(ML2039$SumOfalcohol)
+hist(ML2039$CURRENTCIGARRETS)
+hist(ML2039$MVPA3_HOURS)
+hist(ML2039$TVHOURSTOTAL)
+hist(ML2039$EA_DIETSCORE)
+
+###    3.1 sPLIT DATASET INTO TRAINING AND VALIDATION
+
+TrainRowNumbers39<- createDataPartition(ML2039$CNC_01, p=0.80, list=FALSE)
+TrainData39 <- ML2039[TrainRowNumbers39,]
+str(TrainData39)
+
+testData39<- ML2039[-TrainRowNumbers39,]
+str(testData39)
+
+x39=TrainData39[,2:7]
+x39
+
+y39=TrainData39$CNC_01
+y39
+
+str(testData39)
+
+###############  3.5  PRE PROCESS TO TRANSFORM THE DATA
+skim(TrainData39)
+
+#AgeTRmean <- mean(TrainData39$AGE_BL1)
+BMITRmean <- mean(TrainData39$BMI)
+AlcoholTRmean <- mean(TrainData39$SumOfalcohol)
+SmokingTRmean <- mean(TrainData39$CURRENTCIGARRETS)
+PATRmean <- mean(TrainData39$MVPA3_HOURS)
+SedentaryTRmean <- mean(TrainData39$TVHOURSTOTAL)
+DietTRmean <- mean(TrainData39$EA_DIETSCORE)
+
+#AgeTRSD <- sd(TrainData39$AGE_BL1)
+BMITRSD <- sd(TrainData39$BMI)
+AlcoholTRSD <- sd(TrainData39$SumOfalcohol)
+SmokingTRSD <- sd(TrainData39$CURRENTCIGARRETS)
+PATRSD <- sd(TrainData39$MVPA3_HOURS)
+SedentaryTRSD <- sd(TrainData39$TVHOURSTOTAL)
+DietTRSD <- sd(TrainData39$EA_DIETSCORE)
+
+
+#TrainData39$BMI <- log(TrainData39$BMI+1)
+#TrainData39$CURRENTCIGARRETS <-log(TrainData39$CURRENTCIGARRETS+1)
+#TrainData39$MVPA3_HOURS <- log(TrainData39$MVPA3_HOURS+1)
+#TrainData39$SumOfalcohol <- log(TrainData39$SumOfalcohol+1)
+#TrainData39$TVHOURSTOTAL <- log(TrainData39$TVHOURSTOTAL+1)
+
+preProcess_range_model39 <-preProcess(TrainData39, method=c("center","scale"))
+preProcess_range_model39
+preProcess_range_model39$mean
+preProcess_range_model39$std
+preProcess_range_model39$method
+
+
+TrainData39<-predict(preProcess_range_model39, newdata = TrainData39)
+TrainData39
+TrainData39$CNC_01 <- y39
+
+skim(TrainData39)
+
+
+apply(TrainData39 [2:7],2, FUN = function(x4){c('min'=min(x4), 'max'=max(x4))})
+#apply(TrainData39 [2],2, FUN = function(x4){c('min'=min(x4), 'max'=max(x4))})
+
+View(TrainData39)
+str(TrainData39)
+describe(TrainData39)
+describe(testData39)
+skim_to_wide(TrainData39)
+skim_to_wide(testData39)
+
+
+###SET MODEL 5 FOLD CROSSVALIDATON
+
+fitControl39<- trainControl( method = "cv",
+                             number = 5,
+                             savePredictions = "final",
+                             classProbs = TRUE,
+                             summaryFunction = twoClassSummary)
+
+#mtry39<- sqrt(ncol(x39))
+mtry39<-3 
+tunegrid39<-expand.grid(.mtry=mtry39)
+#                      splitrule= c("gini", "extratrees"),
+#                     min.node.size =c(1,3))
+
+##################  RUN THE RANDOM FOREST MODEL WITH CARET PACKAGE
+
+set.seed(100)
+model_rf39cr = train(CNC_01~.,data =TrainData39, method="rf", 
+                   trControl=fitControl39,  
+                   metric="ROC",tuneGrid=tunegrid39, splitrule= c("gini"), ntree=500, importance=TRUE)
+model_rf39cr
+
+# MAIN TABLE FOR RESULTS OF THE MODEL
+model_rf39cr$finalModel$importance
+model_rf39cr$finalModel$importanceSD
+
+
+##################  RUN THE RANDOM FOREST MODEL WITH RANDOM FOREST PACKAGE
+table(testData39$CNC_01)
+table(TrainData39$CNC_01)
+
+set.seed(100)
+model_rf39rf= randomForest(CNC_01~.,data =TrainData39, ntree=500, mtry= 3 , importance=TRUE, proximity= TRUE)
+
+print(model_rf39rf)
+model_rf39rf
+model_rf39rf$forest$nrnodes
+attributes(model_rf39rf)
+model_rf39rf$importance
+
+##############################################################
+
+model_rf39cr$finalModel$importance
+model_rf39cr$finalModel$importanceSD
+model_rf39cr$results
+model_rf39cr$results$ROC
+model_rf39cr$results$ROCSD
+
+
+
+###  PARTIAL DEPENDENCE PLOT #########
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , AGE_BL1, which.class = "CANCER", main = "Classification for cancer survivorship (Age)")
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , AGE_BL1, which.class = "NOCANCER", main = "Classification for non cancer participant (Age)")
+
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , BMI, which.class = "CANCER", main = "Classification for cancer survivorship (BMI)")
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , BMI, which.class = "NOCANCER", main = "Classification for non cancer participant (BMI)")
+
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , SumOfalcohol, which.class = "CANCER", main = "Classification for cancer survivorship (Alcohol)")
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , SumOfalcohol, which.class = "NOCANCER", main = "Classification for non cancer participant (Alcohol)")
+
+
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , EA_DIETSCORE, which.class = "CANCER", main = "Classification for cancer survivorship (Diet)")
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , EA_DIETSCORE, which.class = "NOCANCER", main = "Classification for non cancer participant (Diet)")
+
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , TVHOURSTOTAL, which.class = "CANCER", main = "Classification for cancer survivorship (Sedentary behaviour)")
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , TVHOURSTOTAL, which.class = "NOCANCER", main = "Classification for non cancer participant (Sedentary behaviour)")
+
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , MVPA3_HOURS, which.class = "CANCER", main = "Classification for cancer survivorship (Physical activity)")
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , MVPA3_HOURS, which.class = "NOCANCER", main = "Classification for non cancer participant (Physical activity)")
+
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , CURRENTCIGARRETS, which.class = "CANCER", main = "Classification for cancer survivorship (Smoking)")
+partialPlot(model_rf39rf, as.data.frame(TrainData39) , CURRENTCIGARRETS, which.class = "NOCANCER", main = "Classification for non cancer participant (Smoking)")
+
+
+
+
+
+
+
+
+
+
+
+###########CASE CONTROLS##################
+
+.libPaths('G:/Applications/R_Packages/R3.5.2 library/library_nov')
+
+library("caretEnsemble", lib.loc="G:/Applications/R_Packages/R3.5.2 library/library_nov")
+library("igraph", lib.loc="G:/Applications/R_Packages/R3.5.2 library/library_nov")
+library("ggraph", lib.loc="G:/Applications/R_Packages/R3.5.2 library/library_nov")
+library("tidyr", lib.loc="G:/Applications/R_Packages/R3.5.2 library/library_nov")
+library("dplyr", lib.loc="G:/Applications/R_Packages/R3.5.2 library/library_nov")
+library("ggplot2", lib.loc="G:/Applications/R_Packages/R3.5.2 library/library_nov")
+library("psych", lib.loc="G:/Applications/R_Packages/R3.5.2 library/library_nov")
+library("readxl", lib.loc="G:/Applications/R_Packages/R3.5.2 library/library_nov")
+library("caret", lib.loc="G:/Applications/R_Packages/R3.5.2 library/library_nov")
+library("pROC", lib.loc="G:/Applications/R_Packages/R3.5.2 library/library_nov")
+library("randomForest", lib.loc="G:/Applications/R_Packages/R3.5.2 library/library_nov")
+library("nnet", lib.loc="G:/Applications/R_Packages/R3.5.2 library/library_nov")
+library("skimr", lib.loc="G:/Applications/R_Packages/R3.5.2 library/library_nov")
+library("nnet", lib.loc="G:/Applications/R_Packages/R3.5.2 library/library_nov")
+library("car", lib.loc="G:/Applications/R_Packages/R3.5.2 library/library_nov")
+
+ONCOML_RANDOMCC <- read_excel("X:/My Desktop/CLUSTER ANALYSIS/9 VARIABLES/ML/july2019/CASECONTROLS ML2019 R.xlsx")
+View(ONCOML_RANDOMCC)
+ML2019cc=ONCOML_RANDOMCC
+str(ML2019cc)
+View(ML2019cc)
+
+ML2019cc$PSEUDOIDEXT_DR16<-NULL
+ML2019cc$PSEUDOIDEXT_DR17<-NULL
+ML2019cc$AGE_BL1<-NULL
+ML2019cc$GESLACHT<-NULL
+ML2019cc$EDUCATIONLMH <-NULL
+#ML2019$BMI <-NULL
+#ML2019$SumOfalcohol <-NULL
+#ML2019$CURRENTCIGARRETS <-NULL
+#ML2019$MVPA3_HOURS <-NULL
+#ML2019$TVHOURSTOTAL <-NULL
+#ML2019$EA_DIETSCORE <-NULL
+
+#View(ML2019)
+#str(ML2019)
+#head(TRAIN4[, 1:13])
+
+# CATEGORICAL VARIABLES AS FACTORS
+
+ML2019cc$CNC_01<-as.factor(ML2019cc$CNC_01)
+ML2019cc$GESLACHT <- as.factor(ML2019cc$GESLACHT)
+ML2019cc$EDUCATIONLMH <- as.factor(ML2019cc$EDUCATIONLMH)
+
+str(ML2019cc)
+View(ML2019cc)
+
+
+###    3.1 sPLIT DATASET INTO TRAINING AND VALIDATION
+
+TrainRowNumbers19cc<- createDataPartition(ML2019cc$CNC_01, p=0.80, list=FALSE)
+TrainData19cc <- ML2019cc[TrainRowNumbers19cc,]
+str(TrainData19cc)
+
+testData19cc<- ML2019cc[-TrainRowNumbers19cc,]
+str(testData19cc)
+
+describe(TrainData19cc)
+describe(testData19cc)
+skim_to_wide(TrainData19cc)
+skim_to_wide(testData19cc)
+
+x19cc=TrainData19cc[,2:7]
+x19cc
+#x4=TrainData4[,2]
+
+y19cc=TrainData19cc$CNC_01
+y19cc
+
+###############  3.5  PRE PROCESS TO TRANSFORM THE DATA
+
+str(TrainData19cc)
+str(testData19cc)
+
+
+preProcess_range_model19cc <-preProcess(TrainData19cc, method= c("center","scale"))
+TrainData19cc<-predict(preProcess_range_model19cc, newdata = TrainData19cc)
+
+TrainData19cc$CNC_01 <- y19cc
+
+#apply(TrainData4 [2:13],2, FUN = function(x4){c('min'=min(x4), 'max'=max(x4))})
+#apply(TrainData4 [2],2, FUN = function(x4){c('min'=min(x4), 'max'=max(x4))})
+
+View(TrainData19cc)
+skim_to_wide(TrainData19cc)
+
+###SET MODEL 5 FOLD CROSSVALIDATON
+
+fitControl19cc<- trainControl(
+                            method = "cv",
+                            number = 5,
+                            savePredictions = "final",
+                            classProbs = TRUE,
+                            summaryFunction = twoClassSummary
+                            )
+
+mtry19cc<- sqrt(ncol(x19cc))
+
+tunegrid19cc<-expand.grid(.mtry=mtry19cc)
+ #                      splitrule= c("gini", "extratrees"),
+  #                     min.node.size =c(1,3,5))
+#tuneGrid=tunegrid4,
+
+#  RUN THE RANDOM FOREST MODEL
+#preProcess=c("center"), 
+set.seed(10)
+model_rf19cc = train(CNC_01~.,data =TrainData19cc, method="rf", trControl=fitControl19cc, 
+               metric="ROC",tuneGrid=tunegrid19cc, splitrule= c("gini"), ntree=500,  importance=TRUE)
+
+model_rf19cc
+model_rf19cc$results$ROC
+model_rf19cc$results$ROCSD
+# MAIN TABLE FOR RESULTS OF THE MODEL
+model_rf19cc$finalModel$importance
+model_rf19cc$finalModel$importanceSD
+
+#
+#nodetree19<-model_rf19$finalModel$forest$nodestatus
+#nodetree19
+
+#model_rf19$finalModel$forest$ndbigtree
+
+#######################################################################################################################
+
+##predict on test data
+#### 6.4 first need to normalize the test data
+
+preProcess_range_modeltest19 <-preProcess(testData19, method= 'range')
+testData19<-predict(preProcess_range_modeltest19, newdata = testData19)
+View(testData19)
+
+predicted19<- predict(model_rf19, testData19)
+head (predicted19)
+
+confusionMatrix (reference=testData19$CNC_01, data = predicted19, mode='everything', positive = "CANCER")
+
+
+###########LOGISTIC REGRESSION##################
+
+.libPaths('G:/Applications/R_Packages/R3.5.2 library/library_nov')
+
+library("caretEnsemble", lib.loc="G:/Applications/R_Packages/R3.5.2 library/library_nov")
+library("igraph", lib.loc="G:/Applications/R_Packages/R3.5.2 library/library_nov")
+library("ggraph", lib.loc="G:/Applications/R_Packages/R3.5.2 library/library_nov")
+library("tidyr", lib.loc="G:/Applications/R_Packages/R3.5.2 library/library_nov")
+library("dplyr", lib.loc="G:/Applications/R_Packages/R3.5.2 library/library_nov")
+library("ggplot2", lib.loc="G:/Applications/R_Packages/R3.5.2 library/library_nov")
+library("psych", lib.loc="G:/Applications/R_Packages/R3.5.2 library/library_nov")
+library("readxl", lib.loc="G:/Applications/R_Packages/R3.5.2 library/library_nov")
+library("caret", lib.loc="G:/Applications/R_Packages/R3.5.2 library/library_nov")
+library("pROC", lib.loc="G:/Applications/R_Packages/R3.5.2 library/library_nov")
+library("randomForest", lib.loc="G:/Applications/R_Packages/R3.5.2 library/library_nov")
+library("nnet", lib.loc="G:/Applications/R_Packages/R3.5.2 library/library_nov")
+library("skimr", lib.loc="G:/Applications/R_Packages/R3.5.2 library/library_nov")
+library("nnet", lib.loc="G:/Applications/R_Packages/R3.5.2 library/library_nov")
+library("car", lib.loc="G:/Applications/R_Packages/R3.5.2 library/library_nov")
+
+ONCOML_RANDOM39LR <- read_excel("X:/My Desktop/CLUSTER ANALYSIS/9 VARIABLES/ML/july2019/ML2039 R/ML2039 2 LR.xlsx")
+
+View(ONCOML_RANDOM39LR)
+ML2039LR=ONCOML_RANDOM39LR
+str(ML2039LR)
+View(ML2039LR)
+
+ML2039LR$PSEUDOIDEXT_DR16<-NULL
+ML2039LR$PSEUDOIDEXT_DR17<-NULL
+#ML2039$AGE_BL1<-NULL
+#ML2039$GESLACHT<-NULL
+#ML2039$EDUCATIONLMH <-NULL
+#ML2039$BMI <-NULL
+#ML2039$SumOfalcohol <-NULL
+#ML2039$MVPA3_HOURS <-NULL
+#ML2039$EA_DIETSCORE <-NULL
+#ML2039$TVHOURSTOTAL <-NULL
+#ML2039$CURRENTCIGARRETS <-NULL
+
+# CATEGORICAL VARIABLES AS FACTORS
+#ONCOML_RANDOM39$CNC_01<-as.factor(ONCOML_RANDOM39$CNC_01)
+
+str(ML2039LR)
+View(ML2039LR)
+skim_to_wide(ML2039LR)
+
+
+hist(ML2039LR$AGE_BL1)
+hist(ML2039LR$BMI)
+hist(ML2039LR$SumOfalcohol)
+hist(ML2039LR$CURRENTCIGARRETS)
+hist(ML2039LR$MVPA3_HOURS)
+hist(ML2039LR$TVHOURSTOTAL)
+hist(ML2039LR$EA_DIETSCORE)
+
+# CATEGORICAL VARIABLES AS FACTORS
+
+#ML2039LR$CNC_01<-as.factor(ML2039LR$CNC_01)
+ML2039LR$GESLACHT <- as.factor(ML2039LR$GESLACHT)
+ML2039LR$EDUCATIONLMH <- as.factor(ML2039LR$EDUCATIONLMH)
+
+
+### LOGISTIC REGRESSION
+
+xtabs(~ML2039LR$CNC_01 + ML2039LR$GESLACHT+ ML2039LR$EDUCATIONLMH, ML2039LR)
+xtabs(~ML2039LR$CNC_01 + ML2039LR$GESLACHT, ML2039LR)
+xtabs(~ML2039LR$CNC_01 + ML2039LR$EDUCATIONLMH, ML2039LR)
+
+####################
+Model1<- glm(ML2039LR$CNC_01~ ML2039LR$AGE_BL1, data = ML2039LR)
+Model1
+#AGE
+AUCAGE<-roc(Model1$y, Model1$fitted.values, auc = TRUE, ci=TRUE, plot = TRUE)
+AUCaloneAGE<-roc(ML2039LR$CNC_01, ML2039LR$AGE_BL1,auc = TRUE, ci=TRUE, plot = TRUE)
+AUCaloneAGE$auc
+
+rocage<-plot.roc(Model1$y, Model1$fitted.values, main= "ROC Age" , ci=TRUE, print.auc= TRUE)
+ciage<-ci.se(rocage, specificities= seq(0,1,0.1))
+plot(ciage, type = "shape", col = "lightgray")
+
+
+####################
+Model2<- glm(ML2039LR$CNC_01~ ML2039LR$BMI, data = ML2039LR)
+Model2
+#BMI
+AUCBMI<-roc( Model2$y, Model2$fitted.values, auc = TRUE, ci=TRUE, plot = TRUE)
+AUCaloneBMI<-roc(ML2039LR$CNC_01, ML2039LR$BMI,auc = TRUE, ci=TRUE, plot = TRUE)
+AUCaloneBMI$auc
+
+rocbmi<-plot.roc(Model2$y, Model2$fitted.values, main= "ROC BMI" , ci=TRUE, print.auc= TRUE)
+cibmi<-ci.se(rocbmi, specificities= seq(0,1,0.1))
+plot(cibmi, type = "shape", col = "lightgray")
+
+
+####################
+Model3<- glm(ML2039LR$CNC_01~ ML2039LR$GESLACHT, data = ML2039LR)
+Model3
+#Sex
+AUCSEX<-roc( Model3$y, Model3$fitted.values, auc = TRUE, ci=TRUE, plot = TRUE)
+AUCaloneSEX<-roc(ML2039LR$CNC_01, ML2039LR$GESLACHT,auc = TRUE, ci=TRUE, plot = TRUE)
+AUCaloneSEX$auc
+
+rocsex<-plot.roc(Model3$y, Model3$fitted.values, main= "ROC Sex" , ci=TRUE, print.auc= TRUE)
+cisex<-ci.se(rocsex, specificities= seq(0,1,0.1))
+plot(cisex, type = "shape", col = "lightgray")
+
+
+####################
+Model4<- glm(ML2039LR$CNC_01~ ML2039LR$EDUCATIONLMH, data = ML2039LR)
+Model4
+#Educational level
+AUCEDUCATION<-roc( Model4$y, Model4$fitted.values, auc = TRUE, ci=TRUE, plot = TRUE)
+AUCaloneEDUCATION<-roc(ML2039LR$CNC_01, ML2039LR$EDUCATIONLMH,auc = TRUE, ci=TRUE, plot = TRUE)
+AUCaloneEDUCATION$auc
+
+roceducation<-plot.roc(Model4$y, Model4$fitted.values, main= "ROC Education" , ci=TRUE, print.auc= TRUE)
+cieducation<-ci.se(roceducation, specificities= seq(0,1,0.1))
+plot(cieducation, type = "shape", col = "lightgray")
+
+
+####################
+Model5<- glm(ML2039LR$CNC_01~ ML2039LR$SumOfalcohol, data = ML2039LR)
+Model5
+#alcohol
+AUCALCOHOL<-roc( Model5$y, Model5$fitted.values, auc = TRUE, ci=TRUE, plot = TRUE)
+AUCaloneALCOHOL<-roc(ML2039LR$CNC_01, ML2039LR$SumOfalcohol ,auc = TRUE, ci=TRUE, plot = TRUE)
+AUCaloneALCOHOL$auc
+
+rocalcohol<-plot.roc(Model5$y, Model5$fitted.values, main= "ROC Alcohol" , ci=TRUE, print.auc= TRUE)
+cialcohol<-ci.se(rocalcohol, specificities= seq(0,1,0.1))
+plot(cialcohol, type = "shape", col = "lightgray")
+
+
+####################
+Model6<- glm(ML2039LR$CNC_01~ ML2039LR$CURRENTCIGARRETS, data = ML2039LR)
+Model6
+#Smoking
+AUCSMOKING<-roc( Model6$y, Model6$fitted.values, auc = TRUE, ci=TRUE, plot = TRUE)
+AUCaloneSMOKING<-roc(ML2039LR$CNC_01, ML2039LR$CURRENTCIGARRETS,auc = TRUE, ci=TRUE, plot = TRUE)
+AUCaloneSMOKING$auc
+
+
+rocsmoking<-plot.roc(Model6$y, Model6$fitted.values, main= "ROC Smoking" , ci=TRUE, print.auc= TRUE)
+cismoking<-ci.se(rocsmoking, specificities= seq(0,1,0.1))
+plot(cismoking, type = "shape", col = "lightgray")
+
+
+####################
+Model7<- glm(ML2039LR$CNC_01~ ML2039LR$MVPA3_HOURS, data = ML2039LR)
+Model7
+#Physical activity
+AUCPHYACT<-roc( Model7$y, Model7$fitted.values, auc = TRUE, ci=TRUE, plot = TRUE)
+AUCalonePHYACT<-roc(ML2039LR$CNC_01, ML2039LR$MVPA3_HOURS,auc = TRUE, ci=TRUE, plot = TRUE)
+AUCalonePHYACT$auc
+
+rocPHYACT<-plot.roc(Model7$y, Model7$fitted.values, main= "ROC Physical activity" , ci=TRUE, print.auc= TRUE)
+ciPHYACT<-ci.se(rocPHYACT, specificities= seq(0,1,0.1))
+plot(ciPHYACT, type = "shape", col = "lightgray")
+
+
+####################
+Model8<- glm(ML2039LR$CNC_01~ ML2039LR$TVHOURSTOTAL, data = ML2039LR)
+Model8
+#sedentary behaviour
+AUCSEDENTARY<-roc( Model8$y, Model8$fitted.values, auc = TRUE, ci=TRUE, plot = TRUE)
+AUCaloneSEDENTARY<-roc(ML2039LR$CNC_01, ML2039LR$TVHOURSTOTAL,auc = TRUE, ci=TRUE, plot = TRUE)
+AUCaloneSEDENTARY$auc
+
+rocsedentary<-plot.roc(Model8$y, Model8$fitted.values, main= "ROC Sedentary behaviour" , ci=TRUE, print.auc= TRUE)
+cisedentary<-ci.se(rocsedentary, specificities= seq(0,1,0.1))
+plot(cisedentary, type = "shape", col = "lightgray")
+
+####################
+Model9<- glm(ML2039LR$CNC_01~ ML2039LR$EA_DIETSCORE, data = ML2039LR)
+Model9
+#diet
+AUCDIET<-roc( Model9$y, Model9$fitted.values, auc = TRUE, ci=TRUE, plot = TRUE)
+AUCaloneDIET<-roc(ML2039LR$CNC_01, ML2039LR$EA_DIETSCORE,auc = TRUE, ci=TRUE, plot = TRUE)
+AUCaloneDIET$auc
+
+rocdiet<-plot.roc(Model9$y, Model9$fitted.values, main= "ROC Diet" , ci=TRUE, print.auc= TRUE)
+cidiet<-ci.se(rocdiet, specificities= seq(0,1,0.1))
+plot(cidiet, type = "shape", col = "lightgray")
+
+####################    MODEL ALL FEATURES
+
+Model10<-glm(ML2039LR$CNC_01 ~ ML2039LR$AGE_BL1 + ML2039LR$GESLACHT + ML2039LR$EDUCATIONLMH + ML2039LR$BMI + ML2039LR$SumOfalcohol + ML2039LR$CURRENTCIGARRETS + ML2039LR$MVPA3_HOURS + ML2039LR$TVHOURSTOTAL + ML2039LR$EA_DIETSCORE, family = binomial, data = ML2039LR)
+summary(Model10)
+confint(Model10)
+
+AUCALLFEATURES<-roc( Model10$y, Model10$fitted.values, auc = TRUE, ci=TRUE, plot = TRUE, smooth = TRUE)
+rocallfeatures<-plot.roc(Model10$y, Model10$fitted.values, main= "ROC all features" , ci=TRUE, print.auc= TRUE)
+ciallfeatures<-ci.se(rocallfeatures, specificities= seq(0,1,0.1))
+plot(ciallfeatures, type = "shape", col = "lightgray")
+
+AUCALLFEATURES$auc
+AUCALLFEATURES$ci
+
+
+#######################################################################################################################################
+AUCALLFEATURES$auc
+AUCALLFEATURES$ci
+
+AUCaloneAGE$auc
+AUCAGE$auc
+AUCAGE$ci
+
+AUCaloneSEX$auc
+AUCSEX$auc
+AUCSEX$ci
+
+AUCaloneEDUCATION$auc
+AUCEDUCATION$auc
+AUCEDUCATION$ci
+
+AUCaloneBMI$auc
+AUCBMI$auc
+AUCBMI$ci
+
+AUCaloneALCOHOL$auc
+AUCALCOHOL$auc
+AUCALCOHOL$ci
+
+AUCaloneSMOKING$auc
+AUCSMOKING$auc
+AUCSMOKING$ci
+
+AUCaloneDIET$auc
+AUCDIET$auc
+AUCDIET$ci
+
+AUCaloneSEDENTARY$auc
+AUCSEDENTARY$auc
+AUCSEDENTARY$ci
+
+AUCalonePHYACT$auc
+AUCPHYACT$auc
+AUCPHYACT$ci
+
